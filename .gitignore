@@ -1,0 +1,15 @@
+# deps & builds
+node_modules/
+dist/
+build/
+coverage/
+
+# caches
+.eslintcache
+
+# OS noise
+Thumbs.db
+desktop.ini
+
+# logs & misc
+*.log
