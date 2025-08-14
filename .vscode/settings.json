@@ -1,0 +1,21 @@
+{
+  "eslint.codeActionsOnSave.options": {},
+
+  // Run ESLint fixes on save — explicit means only when you trigger Save manually
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+
+  // Prettier formats the file on save
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Let Prettier, not ESLint, handle formatting
+  "eslint.format.enable": false,
+
+  // Validate JS and HTML with ESLint
+  "eslint.validate": ["javascript", "html"],
+
+  // Normalize line endings (matches your Prettier setup)
+  "files.eol": "\n"
+}
