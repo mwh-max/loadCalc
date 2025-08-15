@@ -3,31 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LoadCalc: Smart Load Estimator</title>
+    <title>LoadCalc (Baseline)</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <main class="container">
       <h1>LoadCalc</h1>
-      <p class="tagline">Smart Load Estimator</p>
 
       <form id="loadForm">
-        <label for="materialSearch">Search Material:</label>
-        <input
-          type="text"
-          id="materialSearch"
-          placeholder="Type to filter..."
-        />
+        <label>Search</label>
+        <input id="materialSearch" type="text" placeholder="Type to filter…" />
 
-        <label for="material">Material Type:</label>
+        <fieldset class="filters">
+          <legend>Filter by Type</legend>
+          <label
+            ><input type="checkbox" class="typeFilter" value="rigid" />
+            Rigid</label
+          >
+          <label
+            ><input type="checkbox" class="typeFilter" value="loose" />
+            Loose</label
+          >
+          <label
+            ><input type="checkbox" class="typeFilter" value="stackable" />
+            Stackable</label
+          >
+        </fieldset>
+
+        <label>Material</label>
         <select id="material" required>
           <option value="">-- Select Material --</option>
         </select>
 
-        <label for="quantity">Quantity / Volume:</label>
-        <input type="number" id="quantity" min="0" required />
+        <div id="materialNotes" class="note" style="display: none"></div>
 
-        <label for="distribution">Load Distribution:</label>
+        <label>Quantity / Volume</label>
+        <input id="quantity" type="number" min="0" step="0.01" required />
+
+        <label>Distribution</label>
         <select id="distribution" required>
           <option value="">-- Select Distribution --</option>
           <option value="even">Even</option>
@@ -35,7 +48,7 @@
           <option value="top-heavy">Top-Heavy</option>
         </select>
 
-        <label for="support">Support Type:</label>
+        <label>Support</label>
         <select id="support" required>
           <option value="">-- Select Support --</option>
           <option value="scaffold">Scaffold</option>
@@ -46,7 +59,7 @@
         <button type="submit">Calculate</button>
       </form>
 
-      <section id="results" class="results"></section>
+      <section id="results" class="results" style="display: none"></section>
     </main>
 
     <script src="script.js"></script>
