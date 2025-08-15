@@ -36,6 +36,16 @@ const BASE_MATERIALS = [
     type: "rigid",
     notes: "Store flat to prevent bowing.",
   },
+  {
+    name: "Steel Pipe",
+    unit: "ft",
+    weightPerUnit: 2.5,
+    type: "rigid",
+    notes:
+      "Wear gloves; edges can be sharp. Store horizontally to prevent rolling.",
+    aliases: ["metal pipe", "tubing"],
+    tags: ["metal", "construction", "plumbing"],
+  },
 ];
 
 let materials = [...BASE_MATERIALS];
