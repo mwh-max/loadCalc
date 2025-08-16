@@ -16,12 +16,14 @@
 * {
   box-sizing: border-box;
 }
+
 html,
 body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
   font-family:
+    "Oswald",
     system-ui,
     -apple-system,
     Segoe UI,
@@ -230,6 +232,18 @@ select:focus {
   margin-top: 14px;
   font-size: 14px;
 }
+
+.disclaimer {
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.subtitle {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 /* --- Tiny helpers --- */
 .row {
   display: flex;

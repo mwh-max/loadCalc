@@ -3,12 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LoadCalc (Baseline)</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>LoadCalc - Quick Construction Load Checker</title>
+    <meta
+      name="description"
+      content="LoadCalc helps builders and site managers quickly check load safety with material weights, distribution and support type."
+    />
+
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <main class="container">
       <h1>LoadCalc</h1>
+      <p class="subtitle">Fast, on-site safety checks for common materials</p>
 
       <form id="loadForm">
         <label>Search</label>
@@ -60,6 +70,13 @@
       </form>
 
       <section id="results" class="results" style="display: none"></section>
+
+      <p class="disclaimer small">
+        Disclaimer: This tool provides general guidance only. Always confirm
+        load handling with a qualified supervisor or engineer.
+      </p>
+
+      <p class="small">LoadCalc v0.1.0 – MVP Release</p>
     </main>
 
     <script src="script.js"></script>
