@@ -76,7 +76,12 @@ function renderSelectedMaterialNotes() {
 }
 
 function updateMaterialOptions(filter = "") {
+  // 1) Capture current BEFORE clearing the select
+  const current = materialSelect.value;
+
   const selectedTypes = getSelectedTypes();
+
+  // 2) Now clear it
   materialSelect.innerHTML = '<option value="">-- Select Material --</option>';
 
   const qRaw = (filter || "").trim().toLowerCase();
@@ -90,7 +95,6 @@ function updateMaterialOptions(filter = "") {
       const type = (m.type || "").toLowerCase();
       const aliases = (m.aliases || []).map((a) => a.toLowerCase());
       const tags = (m.tags || []).map((t) => t.toLowerCase());
-
       return tokens.every(
         (t) =>
           name.includes(t) ||
@@ -100,7 +104,7 @@ function updateMaterialOptions(filter = "") {
           tags.some((tag) => tag.includes(t)),
       );
     });
-  } // ✅ this closes the if (qRaw) block
+  }
 
   if (selectedTypes.length) {
     filtered = filtered.filter((m) =>
@@ -108,12 +112,21 @@ function updateMaterialOptions(filter = "") {
     );
   }
 
+  // 3) AFTER filters, prepend the previously selected item if it would be hidden
+  if (current && !filtered.some((m) => m.name === current)) {
+    const keep = materials.find((m) => m.name === current);
+    if (keep) filtered = [keep, ...filtered];
+  }
+
+  // 4) Rebuild options and re-select the current item if present
   for (const m of filtered) {
     const opt = document.createElement("option");
     opt.value = m.name;
     opt.textContent = `${m.name} (${m.unit})`;
+    if (m.name === current) opt.selected = true; // keep it selected
     materialSelect.appendChild(opt);
   }
+
   renderSelectedMaterialNotes();
 }
 
