@@ -88,11 +88,19 @@ function updateMaterialOptions(filter = "") {
       const name = (m.name || "").toLowerCase();
       const unit = (m.unit || "").toLowerCase();
       const type = (m.type || "").toLowerCase();
+      const aliases = (m.aliases || []).map((a) => a.toLowerCase());
+      const tags = (m.tags || []).map((t) => t.toLowerCase());
+
       return tokens.every(
-        (t) => name.includes(t) || unit.includes(t) || type.includes(t),
+        (t) =>
+          name.includes(t) ||
+          unit.includes(t) ||
+          type.includes(t) ||
+          aliases.some((a) => a.includes(t)) ||
+          tags.some((tag) => tag.includes(t)),
       );
     });
-  }
+  } // ✅ this closes the if (qRaw) block
 
   if (selectedTypes.length) {
     filtered = filtered.filter((m) =>
@@ -116,6 +124,7 @@ updateMaterialOptions();
 materialSearch.addEventListener("input", () =>
   updateMaterialOptions(materialSearch.value),
 );
+
 document
   .querySelectorAll(".typeFilter")
   .forEach((cb) =>
@@ -123,6 +132,7 @@ document
       updateMaterialOptions(materialSearch.value),
     ),
   );
+
 materialSelect.addEventListener("change", renderSelectedMaterialNotes);
 
 // calc
