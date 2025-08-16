@@ -52,9 +52,11 @@ let materials = [...BASE_MATERIALS];
 
 const supportLimits = { scaffold: 500, hoist: 1000, truck: 5000 };
 
+// DOM
 const materialSearch = document.getElementById("materialSearch");
 const materialSelect = document.getElementById("material");
 const resultsEl = document.getElementById("results");
+const notesEl = document.getElementById("materialNotes");
 
 function getSelectedTypes() {
   return Array.from(document.querySelectorAll(".typeFilter:checked")).map(
@@ -63,20 +65,34 @@ function getSelectedTypes() {
 }
 
 function renderSelectedMaterialNotes() {
-  const notesEl = document.getElementById("materialNotes");
   const selectedName = materialSelect.value;
-  if (!selectedName) {
-    notesEl.style.display = "none";
-    notesEl.textContent = "";
-    return;
-  }
+  // Reset state
+  notesEl.className = "note";
+  notesEl.hidden = true;
+  notesEl.textContent = "";
+
+  if (!selectedName) return;
+
   const m = materials.find((x) => x.name === selectedName);
-  notesEl.textContent = m?.notes || "No notes.";
-  notesEl.style.display = "block";
+  let noteText = m?.notes || "No notes.";
+
+  // If previous calc stored a status on the material, reflect it
+  if (m?.status === "pass") {
+    notesEl.classList.add("result-pass");
+    noteText = "Load passes! " + noteText;
+  } else if (m?.status === "fail") {
+    notesEl.classList.add("result-fail");
+    noteText = "Load fails! " + noteText;
+  }
+
+  notesEl.textContent = noteText;
+  notesEl.hidden = false;
 }
 
 function updateMaterialOptions(filter = "") {
+  const current = materialSelect.value;
   const selectedTypes = getSelectedTypes();
+
   materialSelect.innerHTML = '<option value="">-- Select Material --</option>';
 
   const qRaw = (filter || "").trim().toLowerCase();
@@ -90,7 +106,6 @@ function updateMaterialOptions(filter = "") {
       const type = (m.type || "").toLowerCase();
       const aliases = (m.aliases || []).map((a) => a.toLowerCase());
       const tags = (m.tags || []).map((t) => t.toLowerCase());
-
       return tokens.every(
         (t) =>
           name.includes(t) ||
@@ -100,7 +115,7 @@ function updateMaterialOptions(filter = "") {
           tags.some((tag) => tag.includes(t)),
       );
     });
-  } // ✅ this closes the if (qRaw) block
+  }
 
   if (selectedTypes.length) {
     filtered = filtered.filter((m) =>
@@ -108,12 +123,19 @@ function updateMaterialOptions(filter = "") {
     );
   }
 
+  if (current && !filtered.some((m) => m.name === current)) {
+    const keep = materials.find((m) => m.name === current);
+    if (keep) filtered = [keep, ...filtered];
+  }
+
   for (const m of filtered) {
     const opt = document.createElement("option");
     opt.value = m.name;
     opt.textContent = `${m.name} (${m.unit})`;
+    if (m.name === current) opt.selected = true;
     materialSelect.appendChild(opt);
   }
+
   renderSelectedMaterialNotes();
 }
 
@@ -144,16 +166,19 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   const distribution = document.getElementById("distribution").value;
   const supportType = document.getElementById("support").value;
 
+  // Reset results
+  resultsEl.className = "results";
+  resultsEl.hidden = false;
+
   if (
     !selectedMaterial ||
     !Number.isFinite(quantity) ||
     !distribution ||
     !supportType
   ) {
-    resultsEl.textContent = "Please fill in all fields.";
-    resultsEl.style.display = "block";
-    resultsEl.style.background = "#fff3cd";
-    resultsEl.style.borderLeft = "4px solid #ffc107";
+    resultsEl.classList.add("results-warn");
+    resultsEl.innerHTML =
+      "<div><strong>Status:</strong> Please fill in all fields.</div>";
     return;
   }
 
@@ -164,22 +189,28 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   if (distribution === "off-center") limit *= 0.75;
   if (distribution === "top-heavy") limit *= 0.6;
 
-  const safe = baseWeight <= limit;
-  const riskColor =
-    baseWeight / limit > 1
-      ? "#dc3545"
-      : baseWeight / limit > 0.9
-        ? "#ffc107"
-        : "#28a745";
+  const ratio = baseWeight / limit;
+  const safe = ratio <= 1;
 
   resultsEl.innerHTML = `
     <div><strong>Total Weight:</strong> ${baseWeight.toFixed(2)} lbs</div>
     <div><strong>Distribution:</strong> ${distribution}</div>
     <div><strong>Support:</strong> ${supportType}</div>
     <div><strong>Adjusted Limit:</strong> ${limit.toFixed(2)} lbs</div>
-    <div><strong>Status:</strong> <span style="color:${safe ? "#28a745" : "#dc3545"}">${safe ? "PASS" : "OVERLOADED"}</span></div>
+    <div><strong>Status:</strong> <span>${safe ? "PASS" : "OVERLOADED"}</span> (${(
+      ratio * 100
+    ).toFixed(0)}% of limit)</div>
   `;
-  resultsEl.style.display = "block";
-  resultsEl.style.background = safe ? "#e9f5e9" : "#fcebea";
-  resultsEl.style.borderLeft = `4px solid ${riskColor}`;
+
+  // Apply visual state via classes only
+  if (safe) {
+    resultsEl.classList.add(ratio > 0.9 ? "results-warn" : "results-pass");
+  } else {
+    resultsEl.classList.add("results-fail");
+  }
+
+  // Store status back onto material to reflect in notes (optional UX)
+  delete m.status;
+  m.status = safe ? "pass" : "fail";
+  renderSelectedMaterialNotes();
 });

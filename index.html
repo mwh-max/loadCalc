@@ -3,64 +3,106 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LoadCalc (Baseline)</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>LoadCalc - Quick Construction Load Checker</title>
+    <meta
+      name="description"
+      content="LoadCalc helps builders and site managers quickly check load safety with material weights, distribution, and support type."
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main class="container">
-      <h1>LoadCalc</h1>
+    <div class="wrapper">
+      <header class="site-header">
+        <div class="title">LoadCalc</div>
+        <div class="sub">Fast, on-site safety checks for common materials</div>
+      </header>
 
-      <form id="loadForm">
-        <label>Search</label>
-        <input id="materialSearch" type="text" placeholder="Type to filter…" />
+      <main class="grid">
+        <section class="card">
+          <form id="loadForm" novalidate>
+            <label for="materialSearch">Search</label>
+            <input
+              id="materialSearch"
+              type="text"
+              placeholder="Type to filter…"
+              autocomplete="off"
+            />
 
-        <fieldset class="filters">
-          <legend>Filter by Type</legend>
-          <label
-            ><input type="checkbox" class="typeFilter" value="rigid" />
-            Rigid</label
-          >
-          <label
-            ><input type="checkbox" class="typeFilter" value="loose" />
-            Loose</label
-          >
-          <label
-            ><input type="checkbox" class="typeFilter" value="stackable" />
-            Stackable</label
-          >
-        </fieldset>
+            <fieldset class="filters">
+              <legend>Filter by Type</legend>
+              <label>
+                <input type="checkbox" class="typeFilter" value="rigid" />
+                Rigid
+              </label>
+              <label>
+                <input type="checkbox" class="typeFilter" value="loose" />
+                Loose
+              </label>
+              <label>
+                <input type="checkbox" class="typeFilter" value="stackable" />
+                Stackable
+              </label>
+            </fieldset>
 
-        <label>Material</label>
-        <select id="material" required>
-          <option value="">-- Select Material --</option>
-        </select>
+            <label for="material">Material</label>
+            <select id="material" required>
+              <option value="">-- Select Material --</option>
+            </select>
 
-        <div id="materialNotes" class="note" style="display: none"></div>
+            <div id="materialNotes" class="note" hidden></div>
 
-        <label>Quantity / Volume</label>
-        <input id="quantity" type="number" min="0" step="0.01" required />
+            <div class="row">
+              <div>
+                <label for="quantity">Quantity / Volume</label>
+                <input
+                  id="quantity"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  required
+                />
+              </div>
+              <div>
+                <label for="distribution">Distribution</label>
+                <select id="distribution" required>
+                  <option value="">-- Select Distribution --</option>
+                  <option value="even">Even</option>
+                  <option value="off-center">Off-Center</option>
+                  <option value="top-heavy">Top-Heavy</option>
+                </select>
+              </div>
+              <div>
+                <label for="support">Support</label>
+                <select id="support" required>
+                  <option value="">-- Select Support --</option>
+                  <option value="scaffold">Scaffold</option>
+                  <option value="hoist">Hoist</option>
+                  <option value="truck">Truck</option>
+                </select>
+              </div>
+            </div>
 
-        <label>Distribution</label>
-        <select id="distribution" required>
-          <option value="">-- Select Distribution --</option>
-          <option value="even">Even</option>
-          <option value="off-center">Off-Center</option>
-          <option value="top-heavy">Top-Heavy</option>
-        </select>
+            <button type="submit" class="btn">Calculate</button>
+          </form>
+        </section>
 
-        <label>Support</label>
-        <select id="support" required>
-          <option value="">-- Select Support --</option>
-          <option value="scaffold">Scaffold</option>
-          <option value="hoist">Hoist</option>
-          <option value="truck">Truck</option>
-        </select>
+        <section class="card">
+          <h2 class="small">Results</h2>
+          <section id="results" class="results" hidden></section>
 
-        <button type="submit">Calculate</button>
-      </form>
-
-      <section id="results" class="results" style="display: none"></section>
-    </main>
+          <p class="disclaimer small">
+            Disclaimer: This tool provides general guidance only. Always confirm
+            load handling with a qualified supervisor or engineer.
+          </p>
+          <p class="small">LoadCalc v0.1.1 – MVP Release</p>
+        </section>
+      </main>
+    </div>
 
     <script src="script.js"></script>
   </body>
