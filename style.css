@@ -1,62 +1,251 @@
+/* --- Construction theme tokens --- */
+:root {
+  --bg: #0f172a; /* slate-900 */
+  --panel: #111827; /* gray-900 */
+  --panel-2: #1f2937; /* gray-800 */
+  --text: #e5e7eb; /* gray-200 */
+  --muted: #9ca3af; /* gray-400 */
+  --accent: #f97316; /* safety orange */
+  --accent-2: #2563eb; /* blueprint blue */
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --ring: rgba(249, 115, 22, 0.35);
+  --shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+}
+
 * {
   box-sizing: border-box;
 }
+html,
 body {
-  font-family: system-ui, sans-serif;
-  color: #222;
-  background: #f5f5f5;
-  padding: 1rem;
-}
-.container {
-  max-width: 520px;
-  margin: 0 auto;
-  background: #fff;
-  padding: 1.25rem;
-  border-radius: 8px;
-}
-h1 {
-  margin: 0 0 0.75rem;
-  font-size: 1.5rem;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  border-bottom: 2px solid #111;
-  padding-bottom: 0.25rem;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+  line-height: 1.45;
 }
 
-form {
-  display: grid;
-  gap: 0.75rem;
+/* --- Page shell --- */
+.wrapper {
+  max-width: 960px;
+  margin: 32px auto;
+  padding: 0 16px 40px;
 }
+
+/* Top bar with subtle “caution tape” accent */
+.site-header {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid #222;
+  border-radius: 14px;
+  padding: 18px 20px 12px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.site-header .title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.site-header .sub {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.site-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -10px;
+  height: 10px;
+  border-radius: 0 0 14px 14px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--accent) 0 12px,
+    #111827 12px 24px
+  );
+}
+
+/* --- Panel / card --- */
+.card {
+  background: var(--panel-2);
+  border: 1px solid #23272f;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin-top: 22px;
+}
+
+/* --- Form controls --- */
 label {
-  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 6px;
 }
-input,
-select,
-button {
-  font-size: 1rem;
-  padding: 0.5rem;
+
+input[type="text"],
+select {
+  width: 100%;
+  background: #0b1020;
+  color: var(--text);
+  border: 1px solid #24304a;
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.02s ease;
 }
-button {
-  cursor: pointer;
+input[type="text"]:focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--ring);
 }
-.filters {
-  border: 0;
-  padding: 0;
-  display: flex;
-  gap: 1rem;
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(180deg, var(--accent), #ea580c);
+  color: #111;
+  border: 1px solid #9a3a07;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.06s ease,
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.25);
 }
+.btn:hover {
+  filter: brightness(1.05);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn.secondary {
+  background: linear-gradient(180deg, var(--accent-2), #1d4ed8);
+  border-color: #1e40af;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+}
+
+/* --- Inline badges / chips (for selected types, etc.) --- */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.badge {
+  background: #0b1020;
+  border: 1px solid #24304a;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+.badge.ok {
+  border-color: #14532d;
+  color: #86efac;
+}
+.badge.warn {
+  border-color: #7c4b0b;
+  color: #fcd34d;
+}
+
+/* --- Section layout --- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 820px) {
+  .grid {
+    grid-template-columns: 1.1fr 1fr;
+  }
+}
+
+/* --- Notes / results area --- */
+#materialNotes {
+  background: #0b1020;
+  border: 1px solid #24304a;
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 56px;
+  color: var(--text);
+  font-size: 14px;
+}
+
 .results {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-left: 4px solid #28a745;
-  background: #e9f5e9;
-  border-radius: 4px;
+  border: 1px solid #24304a;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 14px;
+  font-size: 14px;
 }
-.note {
-  margin: 0.25rem 0 0.5rem;
-  padding: 0.5rem;
-  border-left: 4px solid #0d6efd;
-  background: #eef5ff;
-  border-radius: 4px;
+
+/* Results states: light backgrounds + dark text for contrast */
+.results-pass {
+  background: #e9f5e9; /* light green */
+  color: #111827; /* dark text */
+  border-left: 4px solid #28a745;
+  border: 1px solid #24304a;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 14px;
+  font-size: 14px;
+}
+
+.results-warn {
+  background: #fff7e6; /* light amber */
+  color: #111827;
+  border-left: 4px solid #ffc107;
+  border: 1px solid #24304a;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 14px;
+  font-size: 14px;
+}
+
+.results-fail {
+  background: #fcebea; /* light red */
+  color: #111827;
+  border-left: 4px solid #dc3545;
+  border: 1px solid #24304a;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 14px;
+  font-size: 14px;
+}
+/* --- Tiny helpers --- */
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+.row > * {
+  flex: 1;
+}
+.hr {
+  height: 1px;
+  background: #1f2937;
+  border: 0;
+  margin: 16px 0;
+}
+.small {
+  font-size: 12px;
+  color: var(--muted);
 }

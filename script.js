@@ -68,10 +68,24 @@ function renderSelectedMaterialNotes() {
   if (!selectedName) {
     notesEl.style.display = "none";
     notesEl.textContent = "";
+    notesEl.className = "";
     return;
   }
   const m = materials.find((x) => x.name === selectedName);
-  notesEl.textContent = m?.notes || "No notes.";
+
+  let noteText = m?.notes || "No notes.";
+  let noteClass = "";
+
+  if (m?.status === "pass") {
+    noteText = "Load passes! " + noteText;
+    noteClass = "result-pass";
+  } else if (m?.status === "fail") {
+    noteText = "Load fails! " + noteText;
+    noteClass = "result-fail";
+  }
+
+  notesEl.textContent = noteText;
+  notesEl.className = noteClass;
   notesEl.style.display = "block";
 }
 
@@ -190,9 +204,21 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
     <div><strong>Distribution:</strong> ${distribution}</div>
     <div><strong>Support:</strong> ${supportType}</div>
     <div><strong>Adjusted Limit:</strong> ${limit.toFixed(2)} lbs</div>
-    <div><strong>Status:</strong> <span style="color:${safe ? "#28a745" : "#dc3545"}">${safe ? "PASS" : "OVERLOADED"}</span></div>
+    <div><strong>Status:</strong> <span>${safe ? "PASS" : "OVERLOADED"}</span> (${(
+      (baseWeight / limit) *
+      100
+    ).toFixed(0)}% of limit)</div>
   `;
+
   resultsEl.style.display = "block";
+
+  if (safe) {
+    resultsEl.className =
+      baseWeight / limit > 0.9 ? "results-warn" : "results-pass";
+  } else {
+    resultsEl.className = "results-fail";
+  }
+
   resultsEl.style.background = safe ? "#e9f5e9" : "#fcebea";
   resultsEl.style.borderLeft = `4px solid ${riskColor}`;
 });
