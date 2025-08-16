@@ -52,9 +52,11 @@ let materials = [...BASE_MATERIALS];
 
 const supportLimits = { scaffold: 500, hoist: 1000, truck: 5000 };
 
+// DOM
 const materialSearch = document.getElementById("materialSearch");
 const materialSelect = document.getElementById("material");
 const resultsEl = document.getElementById("results");
+const notesEl = document.getElementById("materialNotes");
 
 function getSelectedTypes() {
   return Array.from(document.querySelectorAll(".typeFilter:checked")).map(
@@ -63,39 +65,34 @@ function getSelectedTypes() {
 }
 
 function renderSelectedMaterialNotes() {
-  const notesEl = document.getElementById("materialNotes");
   const selectedName = materialSelect.value;
-  if (!selectedName) {
-    notesEl.style.display = "none";
-    notesEl.textContent = "";
-    notesEl.className = "";
-    return;
-  }
+  // Reset state
+  notesEl.className = "note";
+  notesEl.hidden = true;
+  notesEl.textContent = "";
+
+  if (!selectedName) return;
+
   const m = materials.find((x) => x.name === selectedName);
-
   let noteText = m?.notes || "No notes.";
-  let noteClass = "";
 
+  // If previous calc stored a status on the material, reflect it
   if (m?.status === "pass") {
+    notesEl.classList.add("result-pass");
     noteText = "Load passes! " + noteText;
-    noteClass = "result-pass";
   } else if (m?.status === "fail") {
+    notesEl.classList.add("result-fail");
     noteText = "Load fails! " + noteText;
-    noteClass = "result-fail";
   }
 
   notesEl.textContent = noteText;
-  notesEl.className = noteClass;
-  notesEl.style.display = "block";
+  notesEl.hidden = false;
 }
 
 function updateMaterialOptions(filter = "") {
-  // 1) Capture current BEFORE clearing the select
   const current = materialSelect.value;
-
   const selectedTypes = getSelectedTypes();
 
-  // 2) Now clear it
   materialSelect.innerHTML = '<option value="">-- Select Material --</option>';
 
   const qRaw = (filter || "").trim().toLowerCase();
@@ -126,18 +123,16 @@ function updateMaterialOptions(filter = "") {
     );
   }
 
-  // 3) AFTER filters, prepend the previously selected item if it would be hidden
   if (current && !filtered.some((m) => m.name === current)) {
     const keep = materials.find((m) => m.name === current);
     if (keep) filtered = [keep, ...filtered];
   }
 
-  // 4) Rebuild options and re-select the current item if present
   for (const m of filtered) {
     const opt = document.createElement("option");
     opt.value = m.name;
     opt.textContent = `${m.name} (${m.unit})`;
-    if (m.name === current) opt.selected = true; // keep it selected
+    if (m.name === current) opt.selected = true;
     materialSelect.appendChild(opt);
   }
 
@@ -171,16 +166,19 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   const distribution = document.getElementById("distribution").value;
   const supportType = document.getElementById("support").value;
 
+  // Reset results
+  resultsEl.className = "results";
+  resultsEl.hidden = false;
+
   if (
     !selectedMaterial ||
     !Number.isFinite(quantity) ||
     !distribution ||
     !supportType
   ) {
-    resultsEl.textContent = "Please fill in all fields.";
-    resultsEl.style.display = "block";
-    resultsEl.style.background = "#fff3cd";
-    resultsEl.style.borderLeft = "4px solid #ffc107";
+    resultsEl.classList.add("results-warn");
+    resultsEl.innerHTML =
+      "<div><strong>Status:</strong> Please fill in all fields.</div>";
     return;
   }
 
@@ -191,13 +189,8 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   if (distribution === "off-center") limit *= 0.75;
   if (distribution === "top-heavy") limit *= 0.6;
 
-  const safe = baseWeight <= limit;
-  const riskColor =
-    baseWeight / limit > 1
-      ? "#dc3545"
-      : baseWeight / limit > 0.9
-        ? "#ffc107"
-        : "#28a745";
+  const ratio = baseWeight / limit;
+  const safe = ratio <= 1;
 
   resultsEl.innerHTML = `
     <div><strong>Total Weight:</strong> ${baseWeight.toFixed(2)} lbs</div>
@@ -205,20 +198,19 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
     <div><strong>Support:</strong> ${supportType}</div>
     <div><strong>Adjusted Limit:</strong> ${limit.toFixed(2)} lbs</div>
     <div><strong>Status:</strong> <span>${safe ? "PASS" : "OVERLOADED"}</span> (${(
-      (baseWeight / limit) *
-      100
+      ratio * 100
     ).toFixed(0)}% of limit)</div>
   `;
 
-  resultsEl.style.display = "block";
-
+  // Apply visual state via classes only
   if (safe) {
-    resultsEl.className =
-      baseWeight / limit > 0.9 ? "results-warn" : "results-pass";
+    resultsEl.classList.add(ratio > 0.9 ? "results-warn" : "results-pass");
   } else {
-    resultsEl.className = "results-fail";
+    resultsEl.classList.add("results-fail");
   }
 
-  resultsEl.style.background = safe ? "#e9f5e9" : "#fcebea";
-  resultsEl.style.borderLeft = `4px solid ${riskColor}`;
+  // Store status back onto material to reflect in notes (optional UX)
+  delete m.status;
+  m.status = safe ? "pass" : "fail";
+  renderSelectedMaterialNotes();
 });
