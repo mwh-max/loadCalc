@@ -1005,6 +1005,14 @@ function closeAllTooltips() {
 
 // ---- Init ----
 
+// Reflect persisted unit on toggle buttons before any unit-dependent render.
+document
+  .getElementById("unitLbs")
+  .classList.toggle("active", currentUnit === "lbs");
+document
+  .getElementById("unitKg")
+  .classList.toggle("active", currentUnit === "kg");
+
 updateMaterialOptions();
 updateSupportLabels();
 updateCalculateBtn();
@@ -1012,13 +1020,6 @@ updateCmWeightLabel();
 renderCustomMaterials();
 renderPresets();
 loadFromUrl();
-
-document
-  .getElementById("unitLbs")
-  .classList.toggle("active", currentUnit === "lbs");
-document
-  .getElementById("unitKg")
-  .classList.toggle("active", currentUnit === "kg");
 
 // ---- Listeners ----
 
