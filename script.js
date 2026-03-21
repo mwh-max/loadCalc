@@ -897,6 +897,46 @@ function appendResultRow(label, value) {
   resultsEl.appendChild(div);
 }
 
+function buildOverloadAdvisor(itemResults, totalWeight, limit) {
+  let best = null;
+
+  for (const { material, quantity, weight } of itemResults) {
+    const base = totalWeight - weight; // total without this item
+    const headroom = limit - base;
+    if (headroom <= 0) continue; // even full removal leaves load over limit
+
+    const wpu = material.weightPerUnit;
+    let qKeep = Math.floor(headroom / wpu);
+    // Guard floating-point edge: ensure result is strictly under limit
+    while (qKeep > 0 && base + qKeep * wpu >= limit) qKeep--;
+
+    if (qKeep >= quantity) continue; // item not contributing to overload
+
+    const newTotal = base + qKeep * wpu;
+    const reduction = weight - qKeep * wpu;
+    const qRemoved = quantity - qKeep;
+
+    let suggestion;
+    if (qKeep === 0) {
+      suggestion =
+        `Removing ${qRemoved}× ${material.name} would reduce your load by ` +
+        `${toDisplay(reduction, 1)} and bring it within limit.`;
+    } else {
+      suggestion =
+        `Reducing ${material.name} from ${quantity}× to ${qKeep}× ` +
+        `(removing ${qRemoved}×) would reduce your load by ` +
+        `${toDisplay(reduction, 1)} and bring it within limit.`;
+    }
+
+    // Keep the action that leaves the load highest while still safe
+    if (best === null || newTotal > best.newTotal) {
+      best = { suggestion, newTotal };
+    }
+  }
+
+  return best;
+}
+
 function renderResults(data) {
   const {
     itemResults,
@@ -967,6 +1007,26 @@ function renderResults(data) {
   }
 
   resultsEl.appendChild(explanation);
+
+  if (!safe) {
+    const advisor = document.createElement("div");
+    advisor.className = "overload-advisor";
+
+    const heading = document.createElement("p");
+    heading.className = "oa-heading";
+    heading.textContent = "Overload Advisor";
+    advisor.appendChild(heading);
+
+    const body = document.createElement("p");
+    body.className = "oa-body";
+    const best = buildOverloadAdvisor(itemResults, totalWeight, limit);
+    body.textContent = best
+      ? best.suggestion
+      : "No single item removal would bring this load within the adjusted limit. Try splitting the load or upgrading the support type.";
+    advisor.appendChild(body);
+
+    resultsEl.appendChild(advisor);
+  }
 
   if (safe) {
     resultsEl.classList.add(ratio > 0.9 ? "results-warn" : "results-pass");

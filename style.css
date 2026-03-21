@@ -226,6 +226,29 @@ select:focus {
   font-style: italic;
 }
 
+/* --- Overload Advisor --- */
+.overload-advisor {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.55);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+}
+.oa-heading {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #c2410c;
+}
+.oa-body {
+  margin: 0;
+  color: #374151;
+  line-height: 1.5;
+}
+
 /* --- Result explanation block --- */
 .result-explanation {
   margin-top: 10px;
