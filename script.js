@@ -897,6 +897,69 @@ function appendResultRow(label, value) {
   resultsEl.appendChild(div);
 }
 
+const STANDARD_SUPPORTS = [
+  { key: "scaffold", label: "Scaffold" },
+  { key: "hoist", label: "Hoist" },
+  { key: "truck", label: "Truck" },
+];
+
+function renderSupportComparison(data) {
+  const { distribution, supportType, safetyFactor: sf } = data;
+  const el = document.getElementById("supportComparison");
+  el.innerHTML = "";
+  el.hidden = false;
+
+  const heading = document.createElement("p");
+  heading.className = "sc-heading";
+  heading.textContent = "Support Comparison";
+  el.appendChild(heading);
+
+  const table = document.createElement("table");
+  table.className = "sc-table";
+
+  const thead = document.createElement("thead");
+  thead.innerHTML =
+    "<tr>" +
+    "<th>Support</th>" +
+    "<th>Adj. Limit</th>" +
+    "<th>Load %</th>" +
+    "<th>Status</th>" +
+    "</tr>";
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  for (const { key, label } of STANDARD_SUPPORTS) {
+    const { limit, ratio } = calculateMixedLoad(loadItems, distribution, key, {
+      safetyFactor: sf,
+    });
+    const pct = (ratio * 100).toFixed(0);
+
+    let badge, badgeClass;
+    if (ratio > 1.0) {
+      badge = "FAIL";
+      badgeClass = "sc-fail";
+    } else if (ratio > 0.9) {
+      badge = "WARN";
+      badgeClass = "sc-warn";
+    } else {
+      badge = "PASS";
+      badgeClass = "sc-pass";
+    }
+
+    const tr = document.createElement("tr");
+    if (key === supportType) tr.className = "sc-current";
+    tr.innerHTML =
+      `<td>${label}</td>` +
+      `<td>${toDisplay(limit, 0)}</td>` +
+      `<td>${pct}%</td>` +
+      `<td><span class="sc-badge ${badgeClass}">${badge}</span></td>`;
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  el.appendChild(table);
+}
+
 function buildOverloadAdvisor(itemResults, totalWeight, limit) {
   let best = null;
 
@@ -1036,6 +1099,7 @@ function renderResults(data) {
 
   document.getElementById("copyResultBtn").hidden = false;
   document.getElementById("exportCsvBtn").hidden = false;
+  renderSupportComparison(data);
 }
 
 // ---- Tooltips ----

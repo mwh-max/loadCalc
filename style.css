@@ -249,6 +249,66 @@ select:focus {
   line-height: 1.5;
 }
 
+/* --- Support Comparison table --- */
+#supportComparison {
+  margin-top: 16px;
+}
+.sc-heading {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+}
+.sc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.sc-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 8px 6px;
+  border-bottom: 1px solid #23272f;
+}
+.sc-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #1f2937;
+  color: var(--text);
+}
+.sc-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.sc-current td {
+  background: rgba(249, 115, 22, 0.07);
+}
+.sc-current td:first-child {
+  font-weight: 700;
+  color: var(--accent);
+}
+.sc-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.sc-pass {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+.sc-warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+.sc-fail {
+  background: rgba(220, 53, 69, 0.15);
+  color: #f87171;
+}
+
 /* --- Result explanation block --- */
 .result-explanation {
   margin-top: 10px;
