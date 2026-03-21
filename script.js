@@ -1,56 +1,16 @@
-// ---- Minimal baseline ----
+// ---- Load Calculator ----
 
-const BASE_MATERIALS = [
-  {
-    name: "Lumber (2x4)",
-    unit: "ft",
-    weightPerUnit: 1.2,
-    type: "rigid",
-    notes: "Stack flat to prevent roll-off.",
-  },
-  {
-    name: "Cinder Block",
-    unit: "each",
-    weightPerUnit: 35,
-    type: "stackable",
-    notes: "Avoid stacking above shoulder height.",
-  },
-  {
-    name: "Drywall Sheet",
-    unit: "each",
-    weightPerUnit: 50,
-    type: "rigid",
-    notes: "Edges chip easily; support vertically.",
-  },
-  {
-    name: "Gravel",
-    unit: "cubic ft",
-    weightPerUnit: 100,
-    type: "loose",
-    notes: "Shifts; secure containers.",
-  },
-  {
-    name: "Plywood Sheet",
-    unit: "each",
-    weightPerUnit: 60,
-    type: "rigid",
-    notes: "Store flat to prevent bowing.",
-  },
-  {
-    name: "Steel Pipe",
-    unit: "ft",
-    weightPerUnit: 2.5,
-    type: "rigid",
-    notes:
-      "Wear gloves; edges can be sharp. Store horizontally to prevent rolling.",
-    aliases: ["metal pipe", "tubing"],
-    tags: ["metal", "construction", "plumbing"],
-  },
-];
+import {
+  BASE_MATERIALS,
+  supportLimits,
+  DISTRIBUTION_FACTORS,
+  calculateLoad,
+} from "./calculations.js";
 
 let materials = [...BASE_MATERIALS];
 
-const supportLimits = { scaffold: 500, hoist: 1000, truck: 5000 };
+// Last calculation result — stored separately to avoid mutating material data
+let lastResult = null;
 
 // DOM
 const materialSearch = document.getElementById("materialSearch");
@@ -76,13 +36,15 @@ function renderSelectedMaterialNotes() {
   const m = materials.find((x) => x.name === selectedName);
   let noteText = m?.notes || "No notes.";
 
-  // If previous calc stored a status on the material, reflect it
-  if (m?.status === "pass") {
-    notesEl.classList.add("result-pass");
-    noteText = "Load passes! " + noteText;
-  } else if (m?.status === "fail") {
-    notesEl.classList.add("result-fail");
-    noteText = "Load fails! " + noteText;
+  // Reflect last calculation result if it matches the selected material
+  if (lastResult?.materialName === selectedName) {
+    if (lastResult.status === "pass") {
+      notesEl.classList.add("result-pass");
+      noteText = "Load passes! " + noteText;
+    } else if (lastResult.status === "fail") {
+      notesEl.classList.add("result-fail");
+      noteText = "Load fails! " + noteText;
+    }
   }
 
   notesEl.textContent = noteText;
@@ -139,10 +101,10 @@ function updateMaterialOptions(filter = "") {
   renderSelectedMaterialNotes();
 }
 
-// initial
+// Initial render
 updateMaterialOptions();
 
-// listeners
+// Listeners
 materialSearch.addEventListener("input", () =>
   updateMaterialOptions(materialSearch.value),
 );
@@ -157,7 +119,18 @@ document
 
 materialSelect.addEventListener("change", renderSelectedMaterialNotes);
 
-// calc
+// Helpers
+function setResultsWarn(message) {
+  resultsEl.classList.add("results-warn");
+  const div = document.createElement("div");
+  const strong = document.createElement("strong");
+  strong.textContent = "Status: ";
+  div.appendChild(strong);
+  div.appendChild(document.createTextNode(message));
+  resultsEl.appendChild(div);
+}
+
+// Calculation
 document.getElementById("loadForm").addEventListener("submit", (e) => {
   e.preventDefault();
 
@@ -169,6 +142,7 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   // Reset results
   resultsEl.className = "results";
   resultsEl.hidden = false;
+  resultsEl.innerHTML = "";
 
   if (
     !selectedMaterial ||
@@ -176,41 +150,55 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
     !distribution ||
     !supportType
   ) {
-    resultsEl.classList.add("results-warn");
-    resultsEl.innerHTML =
-      "<div><strong>Status:</strong> Please fill in all fields.</div>";
+    setResultsWarn("Please fill in all fields.");
+    return;
+  }
+
+  if (quantity <= 0) {
+    setResultsWarn("Quantity must be greater than zero.");
     return;
   }
 
   const m = materials.find((x) => x.name === selectedMaterial);
-  const baseWeight = (m.weightPerUnit || 0) * quantity;
+  if (!m) {
+    setResultsWarn("Selected material not found. Please select a valid material.");
+    return;
+  }
 
-  let limit = supportLimits[supportType];
-  if (distribution === "off-center") limit *= 0.75;
-  if (distribution === "top-heavy") limit *= 0.6;
+  const { baseWeight, limit, ratio, safe } = calculateLoad(
+    m,
+    quantity,
+    distribution,
+    supportType,
+  );
 
-  const ratio = baseWeight / limit;
-  const safe = ratio <= 1;
+  // Build result rows using textContent to avoid XSS
+  const rows = [
+    ["Total Weight", `${baseWeight.toFixed(2)} lbs (${quantity} ${m.unit})`],
+    ["Distribution", distribution],
+    ["Support", supportType],
+    ["Adjusted Limit", `${limit.toFixed(2)} lbs`],
+    [
+      "Status",
+      `${safe ? "PASS" : "OVERLOADED"} (${(ratio * 100).toFixed(0)}% of limit)`,
+    ],
+  ];
+  for (const [label, value] of rows) {
+    const div = document.createElement("div");
+    const strong = document.createElement("strong");
+    strong.textContent = label + ": ";
+    div.appendChild(strong);
+    div.appendChild(document.createTextNode(value));
+    resultsEl.appendChild(div);
+  }
 
-  resultsEl.innerHTML = `
-    <div><strong>Total Weight:</strong> ${baseWeight.toFixed(2)} lbs</div>
-    <div><strong>Distribution:</strong> ${distribution}</div>
-    <div><strong>Support:</strong> ${supportType}</div>
-    <div><strong>Adjusted Limit:</strong> ${limit.toFixed(2)} lbs</div>
-    <div><strong>Status:</strong> <span>${safe ? "PASS" : "OVERLOADED"}</span> (${(
-      ratio * 100
-    ).toFixed(0)}% of limit)</div>
-  `;
-
-  // Apply visual state via classes only
   if (safe) {
     resultsEl.classList.add(ratio > 0.9 ? "results-warn" : "results-pass");
   } else {
     resultsEl.classList.add("results-fail");
   }
 
-  // Store status back onto material to reflect in notes (optional UX)
-  delete m.status;
-  m.status = safe ? "pass" : "fail";
+  // Store result status separately — do not mutate material data
+  lastResult = { materialName: selectedMaterial, status: safe ? "pass" : "fail" };
   renderSelectedMaterialNotes();
 });

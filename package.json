@@ -5,7 +5,7 @@
   "main": "script.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "lint": "eslint . --cache --ext .js,.html",
     "lint:fix": "eslint . --fix --ext .js,.html",
     "lint:strict": "eslint . --max-warnings=0 --ext .js,.html",
@@ -28,6 +28,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "vitest": "^4.1.0"
   }
 }
