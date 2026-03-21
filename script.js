@@ -28,6 +28,20 @@ function updateSupportLabels() {
     `Truck (${toDisplay(5000, 0)})`;
 }
 
+// ---- Inline errors ----
+
+function showInlineError(id, message) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.hidden = false;
+}
+
+function clearInlineError(id) {
+  const el = document.getElementById(id);
+  el.textContent = "";
+  el.hidden = true;
+}
+
 // ---- Custom materials (localStorage) ----
 
 const STORAGE_KEY = "loadCalc_customMaterials";
@@ -140,6 +154,7 @@ function loadPreset(index) {
   }
 
   loadItems = resolved;
+  editingIndex = null;
   if (preset.distribution)
     document.getElementById("distribution").value = preset.distribution;
   if (preset.supportType)
@@ -161,6 +176,7 @@ function deletePreset(index) {
 
 let materials = [...BASE_MATERIALS, ...getCustomMaterials()];
 let loadItems = [];
+let editingIndex = null;
 let lastResultData = null;
 
 // ---- DOM ----
@@ -172,6 +188,7 @@ const notesEl = document.getElementById("materialNotes");
 const loadItemsEl = document.getElementById("loadItems");
 const loadItemsListEl = document.getElementById("loadItemsList");
 const loadTotalWeightEl = document.getElementById("loadTotalWeight");
+const calculateBtn = document.getElementById("calculateBtn");
 
 // ---- Distribution hints ----
 
@@ -310,6 +327,21 @@ function updateMaterialOptions(filter = "") {
 
 // ---- Load items ----
 
+function updateCalculateBtn() {
+  calculateBtn.disabled = loadItems.length === 0;
+}
+
+function confirmEdit(index, newQty) {
+  if (!Number.isFinite(newQty) || newQty <= 0) {
+    showInlineError("addError", "Quantity must be greater than zero.");
+    return;
+  }
+  clearInlineError("addError");
+  loadItems[index].quantity = newQty;
+  editingIndex = null;
+  renderLoadItems();
+}
+
 function renderLoadItems() {
   loadItemsListEl.innerHTML = "";
   let total = 0;
@@ -321,36 +353,103 @@ function renderLoadItems() {
     const li = document.createElement("li");
     li.className = "load-item";
 
-    const span = document.createElement("span");
-    span.textContent = `${material.name} × ${quantity} ${material.unit} = ${toDisplay(weight)}`;
+    if (editingIndex === i) {
+      // Edit mode
+      const wrap = document.createElement("div");
+      wrap.className = "load-item-edit";
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn-remove";
-    btn.textContent = "✕";
-    btn.setAttribute("aria-label", `Remove ${material.name}`);
-    btn.addEventListener("click", () => removeFromLoad(i));
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = material.name;
 
-    li.appendChild(span);
-    li.appendChild(btn);
+      const input = document.createElement("input");
+      input.type = "number";
+      input.min = "0";
+      input.step = "0.01";
+      input.inputMode = "decimal";
+      input.value = quantity;
+      input.className = "load-item-qty-input";
+
+      wrap.appendChild(nameSpan);
+      wrap.appendChild(input);
+
+      const confirmBtn = document.createElement("button");
+      confirmBtn.type = "button";
+      confirmBtn.className = "btn-confirm";
+      confirmBtn.textContent = "✓";
+      confirmBtn.setAttribute("aria-label", "Confirm edit");
+      confirmBtn.addEventListener("click", () =>
+        confirmEdit(i, parseFloat(input.value)),
+      );
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") confirmEdit(i, parseFloat(input.value));
+        if (e.key === "Escape") {
+          editingIndex = null;
+          renderLoadItems();
+        }
+      });
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "btn-remove";
+      cancelBtn.textContent = "✕";
+      cancelBtn.setAttribute("aria-label", "Cancel edit");
+      cancelBtn.addEventListener("click", () => {
+        editingIndex = null;
+        renderLoadItems();
+      });
+
+      li.appendChild(wrap);
+      li.appendChild(confirmBtn);
+      li.appendChild(cancelBtn);
+      setTimeout(() => input.focus(), 0);
+    } else {
+      // Display mode
+      const span = document.createElement("span");
+      span.textContent = `${material.name} × ${quantity} ${material.unit} = ${toDisplay(weight)}`;
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "btn-edit";
+      editBtn.textContent = "edit";
+      editBtn.setAttribute("aria-label", `Edit ${material.name} quantity`);
+      editBtn.addEventListener("click", () => {
+        editingIndex = i;
+        renderLoadItems();
+      });
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn-remove";
+      removeBtn.textContent = "✕";
+      removeBtn.setAttribute("aria-label", `Remove ${material.name}`);
+      removeBtn.addEventListener("click", () => removeFromLoad(i));
+
+      li.appendChild(span);
+      li.appendChild(editBtn);
+      li.appendChild(removeBtn);
+    }
+
     loadItemsListEl.appendChild(li);
   });
 
   loadTotalWeightEl.textContent = toDisplay(total);
   loadItemsEl.hidden = loadItems.length === 0;
+  updateCalculateBtn();
   updateGauge();
 }
 
 function addToLoad() {
+  clearInlineError("addError");
   const selectedName = materialSelect.value;
   const quantity = parseFloat(document.getElementById("quantity").value);
 
   if (!selectedName) {
-    alert("Please select a material.");
+    showInlineError("addError", "Please select a material.");
     return;
   }
   if (!Number.isFinite(quantity) || quantity <= 0) {
-    alert("Please enter a quantity greater than zero.");
+    showInlineError("addError", "Please enter a quantity greater than zero.");
     return;
   }
 
@@ -363,6 +462,7 @@ function addToLoad() {
 }
 
 function removeFromLoad(index) {
+  if (editingIndex === index) editingIndex = null;
   loadItems.splice(index, 1);
   renderLoadItems();
 }
@@ -414,16 +514,6 @@ function appendResultRow(label, value) {
   resultsEl.appendChild(div);
 }
 
-function setResultsWarn(message) {
-  resultsEl.classList.add("results-warn");
-  const div = document.createElement("div");
-  const strong = document.createElement("strong");
-  strong.textContent = "Status: ";
-  div.appendChild(strong);
-  div.appendChild(document.createTextNode(message));
-  resultsEl.appendChild(div);
-}
-
 function renderResults(data) {
   const {
     itemResults,
@@ -438,6 +528,7 @@ function renderResults(data) {
   resultsEl.className = "results";
   resultsEl.innerHTML = "";
   resultsEl.hidden = false;
+  document.getElementById("resultsEmpty").hidden = true;
 
   for (const { material, quantity, weight } of itemResults) {
     appendResultRow(
@@ -478,6 +569,7 @@ function renderResults(data) {
 
 updateMaterialOptions();
 updateSupportLabels();
+updateCalculateBtn();
 renderCustomMaterials();
 renderPresets();
 
@@ -508,15 +600,20 @@ document.getElementById("addToLoadBtn").addEventListener("click", addToLoad);
 
 document.getElementById("clearLoadBtn").addEventListener("click", () => {
   loadItems = [];
+  editingIndex = null;
   renderLoadItems();
 });
 
 document.getElementById("distribution").addEventListener("change", () => {
+  clearInlineError("calcError");
   updateDistributionHint();
   updateGauge();
 });
 
-document.getElementById("support").addEventListener("change", updateGauge);
+document.getElementById("support").addEventListener("change", () => {
+  clearInlineError("calcError");
+  updateGauge();
+});
 
 document.getElementById("unitLbs").addEventListener("click", () => {
   currentUnit = "lbs";
@@ -591,21 +688,15 @@ document
 document.getElementById("loadForm").addEventListener("submit", (e) => {
   e.preventDefault();
 
+  clearInlineError("calcError");
   const distribution = document.getElementById("distribution").value;
   const supportType = document.getElementById("support").value;
 
-  resultsEl.className = "results";
-  resultsEl.hidden = false;
-  resultsEl.innerHTML = "";
-  document.getElementById("copyResultBtn").hidden = true;
-
-  if (loadItems.length === 0) {
-    setResultsWarn("Add at least one item to the load before calculating.");
-    return;
-  }
-
   if (!distribution || !supportType) {
-    setResultsWarn("Please select a distribution type and support.");
+    showInlineError(
+      "calcError",
+      "Please select a distribution type and support.",
+    );
     return;
   }
 

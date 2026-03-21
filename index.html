@@ -32,6 +32,12 @@
       <main class="grid">
         <section class="card">
           <form id="loadForm" novalidate>
+
+            <div class="step-header">
+              <span class="step-num">1</span>
+              <span>Select Materials</span>
+            </div>
+
             <label for="materialSearch">Search</label>
             <input
               id="materialSearch"
@@ -81,6 +87,8 @@
               </div>
             </div>
 
+            <div id="addError" class="inline-error" hidden></div>
+
             <div id="loadItems" hidden>
               <div class="load-items-header">
                 <span>Load Items</span>
@@ -102,6 +110,11 @@
               <div class="gauge-track">
                 <div id="gaugeBar" class="gauge-bar"></div>
               </div>
+            </div>
+
+            <div class="step-header">
+              <span class="step-num">2</span>
+              <span>Set Load Conditions</span>
             </div>
 
             <div class="row">
@@ -126,7 +139,16 @@
               </div>
             </div>
 
-            <button type="submit" class="btn">Calculate</button>
+            <div id="calcError" class="inline-error" hidden></div>
+
+            <div class="step-header">
+              <span class="step-num">3</span>
+              <span>Review &amp; Calculate</span>
+            </div>
+
+            <button type="submit" id="calculateBtn" class="btn" disabled>
+              Calculate
+            </button>
           </form>
 
           <hr class="hr" />
@@ -198,8 +220,16 @@
 
         <section class="card">
           <h2 class="small">Results</h2>
+          <p id="resultsEmpty" class="results-empty">
+            Add materials to your load to get started.
+          </p>
           <section id="results" class="results" hidden></section>
-          <button type="button" id="copyResultBtn" class="btn btn-secondary btn-copy" hidden>
+          <button
+            type="button"
+            id="copyResultBtn"
+            class="btn btn-secondary btn-copy"
+            hidden
+          >
             Copy Result
           </button>
 
