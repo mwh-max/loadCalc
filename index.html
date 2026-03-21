@@ -17,8 +17,16 @@
   <body>
     <div class="wrapper">
       <header class="site-header">
-        <div class="title">LoadCalc</div>
-        <div class="sub">Fast, on-site safety checks for common materials</div>
+        <div class="header-row">
+          <div>
+            <div class="title">LoadCalc</div>
+            <div class="sub">Fast, on-site safety checks for common materials</div>
+          </div>
+          <div class="unit-toggle" role="group" aria-label="Weight unit">
+            <button type="button" id="unitLbs" class="unit-btn active">lbs</button>
+            <button type="button" id="unitKg" class="unit-btn">kg</button>
+          </div>
+        </div>
       </header>
 
       <main class="grid">
@@ -82,7 +90,17 @@
               </div>
               <ul id="loadItemsList" class="load-list"></ul>
               <div class="load-total">
-                Running total: <strong id="loadTotalWeight">0</strong> lbs
+                Running total: <strong id="loadTotalWeight">0</strong>
+              </div>
+            </div>
+
+            <div id="gauge" class="gauge" hidden>
+              <div class="gauge-header">
+                <span>Load vs. Limit</span>
+                <span id="gaugeLabel"></span>
+              </div>
+              <div class="gauge-track">
+                <div id="gaugeBar" class="gauge-bar"></div>
               </div>
             </div>
 
@@ -95,20 +113,38 @@
                   <option value="off-center">Off-Center</option>
                   <option value="top-heavy">Top-Heavy</option>
                 </select>
+                <div id="distributionHint" class="field-hint"></div>
               </div>
               <div>
                 <label for="support">Support</label>
                 <select id="support" required>
                   <option value="">-- Select --</option>
-                  <option value="scaffold">Scaffold (500 lbs)</option>
-                  <option value="hoist">Hoist (1,000 lbs)</option>
-                  <option value="truck">Truck (5,000 lbs)</option>
+                  <option value="scaffold" id="optScaffold">Scaffold</option>
+                  <option value="hoist" id="optHoist">Hoist</option>
+                  <option value="truck" id="optTruck">Truck</option>
                 </select>
               </div>
             </div>
 
             <button type="submit" class="btn">Calculate</button>
           </form>
+
+          <hr class="hr" />
+
+          <details class="presets">
+            <summary>Presets</summary>
+            <div class="preset-save">
+              <input
+                type="text"
+                id="presetNameInput"
+                placeholder="Name this load…"
+              />
+              <button type="button" id="savePresetBtn" class="btn btn-secondary">
+                Save Current Load
+              </button>
+            </div>
+            <ul id="presetsList" class="preset-list"></ul>
+          </details>
 
           <hr class="hr" />
 
@@ -122,7 +158,11 @@
                 </div>
                 <div>
                   <label for="cmUnit">Unit</label>
-                  <input id="cmUnit" type="text" placeholder="ft, each, cubic ft" />
+                  <input
+                    id="cmUnit"
+                    type="text"
+                    placeholder="ft, each, cubic ft"
+                  />
                 </div>
               </div>
               <div class="row">
@@ -159,6 +199,9 @@
         <section class="card">
           <h2 class="small">Results</h2>
           <section id="results" class="results" hidden></section>
+          <button type="button" id="copyResultBtn" class="btn btn-secondary btn-copy" hidden>
+            Copy Result
+          </button>
 
           <p class="disclaimer small">
             Disclaimer: This tool provides general guidance only. Always confirm

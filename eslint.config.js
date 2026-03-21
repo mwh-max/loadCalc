@@ -23,6 +23,8 @@ export default [
         console: "readonly",
         localStorage: "readonly",
         alert: "readonly",
+        navigator: "readonly",
+        setTimeout: "readonly",
       },
     },
     plugins: { prettier: pluginPrettier },

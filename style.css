@@ -40,6 +40,14 @@ body {
   padding: 0 16px 40px;
 }
 
+/* --- Header row with unit toggle --- */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Top bar with subtle “caution tape” accent */
 .site-header {
   position: relative;
@@ -407,4 +415,193 @@ textarea:focus {
   border: 1px solid #24304a;
   border-radius: 8px;
   padding: 6px 10px;
+}
+
+/* --- Unit toggle --- */
+.unit-toggle {
+  display: flex;
+  background: #0b1020;
+  border: 1px solid #24304a;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.unit-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.unit-btn.active {
+  background: var(--accent);
+  color: #111;
+}
+
+/* --- Weight gauge --- */
+.gauge {
+  margin: 12px 0 6px;
+  background: #0b1020;
+  border: 1px solid #24304a;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.gauge-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.gauge-track {
+  height: 10px;
+  background: #1f2937;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.gauge-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.gauge-bar.gauge-ok {
+  background: var(--ok);
+}
+.gauge-bar.gauge-warn {
+  background: var(--warn);
+}
+.gauge-bar.gauge-fail {
+  background: #dc3545;
+}
+
+/* --- Distribution field hint --- */
+.field-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+  min-height: 14px;
+  line-height: 1.4;
+}
+
+/* --- Presets section --- */
+.presets {
+  margin-top: 4px;
+}
+.presets summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 6px 2px;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease;
+}
+.presets summary:hover {
+  color: var(--text);
+}
+.presets summary::before {
+  content: "+";
+  font-weight: 700;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+.presets[open] summary::before {
+  transform: rotate(45deg);
+}
+.preset-save {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+.preset-save input {
+  flex: 1;
+}
+.preset-save .btn {
+  margin-top: 0;
+  white-space: nowrap;
+}
+.preset-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.preset-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  background: #0b1020;
+  border: 1px solid #24304a;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.preset-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --- Copy result button --- */
+.btn-copy {
+  margin-top: 10px;
+  font-size: 13px;
+  padding: 8px 14px;
+}
+
+/* --- Print styles --- */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  .site-header::after {
+    display: none;
+  }
+  .site-header,
+  .card {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  .grid {
+    display: block;
+  }
+  /* Hide the form card entirely, show only results */
+  .grid > section:first-child {
+    display: none;
+  }
+  .results {
+    display: block !important;
+  }
+  .results-pass {
+    background: #e9f5e9;
+    color: black;
+  }
+  .results-warn {
+    background: #fff7e6;
+    color: black;
+  }
+  .results-fail {
+    background: #fcebea;
+    color: black;
+  }
+  .btn-copy,
+  .unit-toggle {
+    display: none;
+  }
 }

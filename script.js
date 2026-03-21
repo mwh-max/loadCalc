@@ -1,10 +1,37 @@
 // ---- Load Calculator ----
 
-import { BASE_MATERIALS, calculateMixedLoad } from "./calculations.js";
+import {
+  BASE_MATERIALS,
+  supportLimits,
+  DISTRIBUTION_FACTORS,
+  calculateMixedLoad,
+} from "./calculations.js";
+
+// ---- Unit conversion ----
+
+let currentUnit = localStorage.getItem("loadCalc_unit") || "lbs";
+const KG_PER_LB = 0.453592;
+
+function toDisplay(lbs, decimals = 1) {
+  if (currentUnit === "kg") {
+    return `${(lbs * KG_PER_LB).toFixed(decimals)} kg`;
+  }
+  return `${lbs.toFixed(decimals)} lbs`;
+}
+
+function updateSupportLabels() {
+  document.getElementById("optScaffold").textContent =
+    `Scaffold (${toDisplay(500, 0)})`;
+  document.getElementById("optHoist").textContent =
+    `Hoist (${toDisplay(1000, 0)})`;
+  document.getElementById("optTruck").textContent =
+    `Truck (${toDisplay(5000, 0)})`;
+}
 
 // ---- Custom materials (localStorage) ----
 
 const STORAGE_KEY = "loadCalc_customMaterials";
+const PRESETS_KEY = "loadCalc_presets";
 
 function getCustomMaterials() {
   try {
@@ -23,11 +50,118 @@ function refreshMaterials() {
   updateMaterialOptions(materialSearch.value);
 }
 
+// ---- Presets (localStorage) ----
+
+function getPresets() {
+  try {
+    return JSON.parse(localStorage.getItem(PRESETS_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function renderPresets() {
+  const list = document.getElementById("presetsList");
+  list.innerHTML = "";
+  const presets = getPresets();
+  if (presets.length === 0) return;
+
+  presets.forEach((preset, i) => {
+    const li = document.createElement("li");
+    li.className = "preset-item";
+
+    const info = document.createElement("span");
+    info.textContent = `${preset.name} (${preset.items.length} item${preset.items.length !== 1 ? "s" : ""})`;
+
+    const actions = document.createElement("div");
+    actions.className = "preset-actions";
+
+    const loadBtn = document.createElement("button");
+    loadBtn.type = "button";
+    loadBtn.className = "btn-ghost";
+    loadBtn.textContent = "Load";
+    loadBtn.addEventListener("click", () => loadPreset(i));
+
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "btn-remove";
+    delBtn.textContent = "✕";
+    delBtn.setAttribute("aria-label", `Delete preset ${preset.name}`);
+    delBtn.addEventListener("click", () => deletePreset(i));
+
+    actions.appendChild(loadBtn);
+    actions.appendChild(delBtn);
+    li.appendChild(info);
+    li.appendChild(actions);
+    list.appendChild(li);
+  });
+}
+
+function savePreset(name) {
+  if (!name.trim()) {
+    alert("Please enter a preset name.");
+    return;
+  }
+  if (loadItems.length === 0) {
+    alert("Add at least one item to the load before saving a preset.");
+    return;
+  }
+  const distribution = document.getElementById("distribution").value;
+  const supportType = document.getElementById("support").value;
+  const presets = getPresets();
+  presets.push({
+    name: name.trim(),
+    items: loadItems.map(({ material, quantity }) => ({
+      materialName: material.name,
+      quantity,
+    })),
+    distribution,
+    supportType,
+  });
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+  renderPresets();
+  document.getElementById("presetNameInput").value = "";
+}
+
+function loadPreset(index) {
+  const preset = getPresets()[index];
+  if (!preset) return;
+
+  const resolved = preset.items
+    .map(({ materialName, quantity }) => {
+      const material = materials.find((m) => m.name === materialName);
+      return material ? { material, quantity } : null;
+    })
+    .filter(Boolean);
+
+  if (resolved.length === 0) {
+    alert("None of the materials in this preset could be found.");
+    return;
+  }
+
+  loadItems = resolved;
+  if (preset.distribution)
+    document.getElementById("distribution").value = preset.distribution;
+  if (preset.supportType)
+    document.getElementById("support").value = preset.supportType;
+
+  renderLoadItems();
+  updateGauge();
+  updateDistributionHint();
+}
+
+function deletePreset(index) {
+  const presets = getPresets();
+  presets.splice(index, 1);
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+  renderPresets();
+}
+
 // ---- State ----
 
 let materials = [...BASE_MATERIALS, ...getCustomMaterials()];
-let loadItems = []; // Array of { material, quantity }
-let lastResult = null; // Last calculation status for notes display
+let loadItems = [];
+let lastResultData = null;
 
 // ---- DOM ----
 
@@ -38,6 +172,53 @@ const notesEl = document.getElementById("materialNotes");
 const loadItemsEl = document.getElementById("loadItems");
 const loadItemsListEl = document.getElementById("loadItemsList");
 const loadTotalWeightEl = document.getElementById("loadTotalWeight");
+
+// ---- Distribution hints ----
+
+const DISTRIBUTION_HINTS = {
+  even: "Load is spread uniformly across the support.",
+  "off-center":
+    "Load is shifted to one side, concentrating stress. Capacity reduced 25%.",
+  "top-heavy":
+    "Center of gravity is high, increasing tipping risk. Capacity reduced 40%.",
+};
+
+function updateDistributionHint() {
+  const val = document.getElementById("distribution").value;
+  document.getElementById("distributionHint").textContent =
+    DISTRIBUTION_HINTS[val] || "";
+}
+
+// ---- Gauge ----
+
+function updateGauge() {
+  const gaugeEl = document.getElementById("gauge");
+  const gaugeBar = document.getElementById("gaugeBar");
+  const gaugeLabel = document.getElementById("gaugeLabel");
+  const distribution = document.getElementById("distribution").value;
+  const supportType = document.getElementById("support").value;
+
+  if (loadItems.length === 0 || !distribution || !supportType) {
+    gaugeEl.hidden = true;
+    return;
+  }
+
+  const totalWeight = loadItems.reduce(
+    (sum, { material, quantity }) => sum + material.weightPerUnit * quantity,
+    0,
+  );
+  const factor = DISTRIBUTION_FACTORS[distribution] ?? 1.0;
+  const limit = supportLimits[supportType] * factor;
+  const ratio = totalWeight / limit;
+  const pct = Math.min(ratio * 100, 100);
+
+  gaugeBar.style.width = `${pct}%`;
+  gaugeBar.className =
+    "gauge-bar " +
+    (ratio >= 1 ? "gauge-fail" : ratio >= 0.9 ? "gauge-warn" : "gauge-ok");
+  gaugeLabel.textContent = `${toDisplay(totalWeight)} / ${toDisplay(limit)}`;
+  gaugeEl.hidden = false;
+}
 
 // ---- Material notes ----
 
@@ -58,13 +239,16 @@ function renderSelectedMaterialNotes() {
   const m = materials.find((x) => x.name === selectedName);
   let noteText = m?.notes || "No notes.";
 
-  if (lastResult?.materialName === selectedName) {
-    if (lastResult.status === "pass") {
-      notesEl.classList.add("result-pass");
-      noteText = "Load passes! " + noteText;
-    } else if (lastResult.status === "fail") {
-      notesEl.classList.add("result-fail");
-      noteText = "Load fails! " + noteText;
+  if (lastResultData?.status) {
+    const lastName = loadItems[loadItems.length - 1]?.material.name;
+    if (lastName === selectedName) {
+      if (lastResultData.status === "pass") {
+        notesEl.classList.add("result-pass");
+        noteText = "Load passes! " + noteText;
+      } else {
+        notesEl.classList.add("result-fail");
+        noteText = "Load fails! " + noteText;
+      }
     }
   }
 
@@ -128,8 +312,8 @@ function updateMaterialOptions(filter = "") {
 
 function renderLoadItems() {
   loadItemsListEl.innerHTML = "";
-
   let total = 0;
+
   loadItems.forEach(({ material, quantity }, i) => {
     const weight = material.weightPerUnit * quantity;
     total += weight;
@@ -138,7 +322,7 @@ function renderLoadItems() {
     li.className = "load-item";
 
     const span = document.createElement("span");
-    span.textContent = `${material.name} × ${quantity} ${material.unit} = ${weight.toFixed(1)} lbs`;
+    span.textContent = `${material.name} × ${quantity} ${material.unit} = ${toDisplay(weight)}`;
 
     const btn = document.createElement("button");
     btn.type = "button";
@@ -152,8 +336,9 @@ function renderLoadItems() {
     loadItemsListEl.appendChild(li);
   });
 
-  loadTotalWeightEl.textContent = total.toFixed(1);
+  loadTotalWeightEl.textContent = toDisplay(total);
   loadItemsEl.hidden = loadItems.length === 0;
+  updateGauge();
 }
 
 function addToLoad() {
@@ -174,8 +359,6 @@ function addToLoad() {
 
   loadItems.push({ material: m, quantity });
   renderLoadItems();
-
-  // Clear quantity field for the next item
   document.getElementById("quantity").value = "";
 }
 
@@ -189,7 +372,6 @@ function removeFromLoad(index) {
 function renderCustomMaterials() {
   const list = document.getElementById("customMaterialsList");
   list.innerHTML = "";
-
   const customs = getCustomMaterials();
   if (customs.length === 0) return;
 
@@ -221,7 +403,16 @@ function deleteCustomMaterial(index) {
   renderCustomMaterials();
 }
 
-// ---- Helpers ----
+// ---- Results ----
+
+function appendResultRow(label, value) {
+  const div = document.createElement("div");
+  const strong = document.createElement("strong");
+  strong.textContent = label + ": ";
+  div.appendChild(strong);
+  div.appendChild(document.createTextNode(value));
+  resultsEl.appendChild(div);
+}
 
 function setResultsWarn(message) {
   resultsEl.classList.add("results-warn");
@@ -233,19 +424,69 @@ function setResultsWarn(message) {
   resultsEl.appendChild(div);
 }
 
-function appendResultRow(label, value) {
-  const div = document.createElement("div");
-  const strong = document.createElement("strong");
-  strong.textContent = label + ": ";
-  div.appendChild(strong);
-  div.appendChild(document.createTextNode(value));
-  resultsEl.appendChild(div);
+function renderResults(data) {
+  const {
+    itemResults,
+    totalWeight,
+    limit,
+    ratio,
+    safe,
+    distribution,
+    supportType,
+  } = data;
+
+  resultsEl.className = "results";
+  resultsEl.innerHTML = "";
+  resultsEl.hidden = false;
+
+  for (const { material, quantity, weight } of itemResults) {
+    appendResultRow(
+      `${material.name} × ${quantity} ${material.unit}`,
+      toDisplay(weight, 2),
+    );
+  }
+
+  const divider = document.createElement("hr");
+  divider.className = "hr";
+  resultsEl.appendChild(divider);
+
+  appendResultRow("Total Weight", toDisplay(totalWeight, 2));
+  appendResultRow("Distribution", distribution);
+  appendResultRow("Support", supportType);
+  appendResultRow("Adjusted Limit", toDisplay(limit, 2));
+  appendResultRow(
+    "Status",
+    `${safe ? "PASS" : "OVERLOADED"} (${(ratio * 100).toFixed(0)}% of limit)`,
+  );
+
+  if (safe && ratio > 0.9) {
+    const caution = document.createElement("div");
+    caution.textContent = "Caution: load is above 90% of the adjusted limit.";
+    resultsEl.appendChild(caution);
+  }
+
+  if (safe) {
+    resultsEl.classList.add(ratio > 0.9 ? "results-warn" : "results-pass");
+  } else {
+    resultsEl.classList.add("results-fail");
+  }
+
+  document.getElementById("copyResultBtn").hidden = false;
 }
 
 // ---- Init ----
 
 updateMaterialOptions();
+updateSupportLabels();
 renderCustomMaterials();
+renderPresets();
+
+document
+  .getElementById("unitLbs")
+  .classList.toggle("active", currentUnit === "lbs");
+document
+  .getElementById("unitKg")
+  .classList.toggle("active", currentUnit === "kg");
 
 // ---- Listeners ----
 
@@ -268,6 +509,52 @@ document.getElementById("addToLoadBtn").addEventListener("click", addToLoad);
 document.getElementById("clearLoadBtn").addEventListener("click", () => {
   loadItems = [];
   renderLoadItems();
+});
+
+document.getElementById("distribution").addEventListener("change", () => {
+  updateDistributionHint();
+  updateGauge();
+});
+
+document.getElementById("support").addEventListener("change", updateGauge);
+
+document.getElementById("unitLbs").addEventListener("click", () => {
+  currentUnit = "lbs";
+  localStorage.setItem("loadCalc_unit", "lbs");
+  document.getElementById("unitLbs").classList.add("active");
+  document.getElementById("unitKg").classList.remove("active");
+  updateSupportLabels();
+  renderLoadItems();
+  if (lastResultData) renderResults(lastResultData);
+});
+
+document.getElementById("unitKg").addEventListener("click", () => {
+  currentUnit = "kg";
+  localStorage.setItem("loadCalc_unit", "kg");
+  document.getElementById("unitKg").classList.add("active");
+  document.getElementById("unitLbs").classList.remove("active");
+  updateSupportLabels();
+  renderLoadItems();
+  if (lastResultData) renderResults(lastResultData);
+});
+
+document.getElementById("savePresetBtn").addEventListener("click", () => {
+  savePreset(document.getElementById("presetNameInput").value);
+});
+
+document.getElementById("copyResultBtn").addEventListener("click", () => {
+  const lines = [];
+  resultsEl
+    .querySelectorAll("div")
+    .forEach((div) => lines.push(div.textContent));
+  navigator.clipboard.writeText(lines.join("\n")).then(() => {
+    const btn = document.getElementById("copyResultBtn");
+    const orig = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => {
+      btn.textContent = orig;
+    }, 2000);
+  });
 });
 
 document
@@ -296,7 +583,6 @@ document
     saveCustomMaterials(list);
     refreshMaterials();
     renderCustomMaterials();
-
     e.target.reset();
   });
 
@@ -311,6 +597,7 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   resultsEl.className = "results";
   resultsEl.hidden = false;
   resultsEl.innerHTML = "";
+  document.getElementById("copyResultBtn").hidden = true;
 
   if (loadItems.length === 0) {
     setResultsWarn("Add at least one item to the load before calculating.");
@@ -328,45 +615,17 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
     supportType,
   );
 
-  // Item breakdown
-  for (const { material, quantity, weight } of itemResults) {
-    appendResultRow(
-      `${material.name} × ${quantity} ${material.unit}`,
-      `${weight.toFixed(2)} lbs`,
-    );
-  }
-
-  // Summary
-  const divider = document.createElement("hr");
-  divider.className = "hr";
-  resultsEl.appendChild(divider);
-
-  appendResultRow("Total Weight", `${totalWeight.toFixed(2)} lbs`);
-  appendResultRow("Distribution", distribution);
-  appendResultRow("Support", supportType);
-  appendResultRow("Adjusted Limit", `${limit.toFixed(2)} lbs`);
-  appendResultRow(
-    "Status",
-    `${safe ? "PASS" : "OVERLOADED"} (${(ratio * 100).toFixed(0)}% of limit)`,
-  );
-
-  if (safe && ratio > 0.9) {
-    const caution = document.createElement("div");
-    caution.textContent = "Caution: load is above 90% of the adjusted limit.";
-    resultsEl.appendChild(caution);
-  }
-
-  if (safe) {
-    resultsEl.classList.add(ratio > 0.9 ? "results-warn" : "results-pass");
-  } else {
-    resultsEl.classList.add("results-fail");
-  }
-
-  // Store status for the last material added (for notes display)
-  const lastItem = loadItems[loadItems.length - 1];
-  lastResult = {
-    materialName: lastItem.material.name,
+  lastResultData = {
+    itemResults,
+    totalWeight,
+    limit,
+    ratio,
+    safe,
+    distribution,
+    supportType,
     status: safe ? "pass" : "fail",
   };
+
+  renderResults(lastResultData);
   renderSelectedMaterialNotes();
 });
