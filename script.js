@@ -941,11 +941,32 @@ function renderResults(data) {
     `${safe ? "PASS" : "OVERLOADED"} (${(ratio * 100).toFixed(0)}% of limit)`,
   );
 
-  if (safe && ratio > 0.9) {
-    const caution = document.createElement("div");
-    caution.textContent = "Caution: load is above 90% of the adjusted limit.";
-    resultsEl.appendChild(caution);
+  const explanation = document.createElement("div");
+  explanation.className = "result-explanation";
+
+  if (!safe) {
+    const over = totalWeight - limit;
+    explanation.innerHTML =
+      `<p class="re-title">Load exceeds the adjusted limit by <strong>${toDisplay(over, 1)}</strong>.</p>` +
+      `<p class="re-sub">To bring this within limits:</p>` +
+      `<ul class="re-list">` +
+      `<li><strong>Reduce quantity</strong> — remove or relocate items until the total drops below ${toDisplay(limit, 1)}.</li>` +
+      `<li><strong>Use a higher-capacity support</strong> — switch to a support type with a greater rated load.</li>` +
+      `<li><strong>Split the load</strong> — distribute materials across multiple support points.</li>` +
+      `</ul>`;
+  } else if (ratio > 0.9) {
+    const remaining = limit - totalWeight;
+    explanation.innerHTML =
+      `<p class="re-title">Load is at ${(ratio * 100).toFixed(0)}% of capacity — only <strong>${toDisplay(remaining, 1)}</strong> of headroom remains.</p>` +
+      `<p class="re-sub">At this level, small additions or uneven weight distribution can exceed the limit. Consider applying a safety factor (e.g. 1.25×) to build in a buffer before committing to this setup.</p>`;
+  } else {
+    const remaining = limit - totalWeight;
+    explanation.innerHTML =
+      `<p class="re-title">Load is at ${(ratio * 100).toFixed(0)}% of capacity.</p>` +
+      `<p class="re-sub">Remaining capacity: <strong>${toDisplay(remaining, 1)}</strong>. This setup is well within the safe limit.</p>`;
   }
+
+  resultsEl.appendChild(explanation);
 
   if (safe) {
     resultsEl.classList.add(ratio > 0.9 ? "results-warn" : "results-pass");

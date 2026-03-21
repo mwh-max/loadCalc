@@ -226,6 +226,34 @@ select:focus {
   font-style: italic;
 }
 
+/* --- Result explanation block --- */
+.result-explanation {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.re-title {
+  margin: 0 0 5px;
+  font-weight: 600;
+}
+.re-sub {
+  margin: 0 0 4px;
+  color: #374151;
+}
+.re-list {
+  margin: 4px 0 0 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.re-list li {
+  color: #374151;
+  line-height: 1.4;
+}
+
 .subtitle {
   margin-top: 4px;
   color: var(--muted);
