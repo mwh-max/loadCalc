@@ -1017,6 +1017,8 @@ function renderResults(data) {
   resultsEl.innerHTML = "";
   resultsEl.hidden = false;
   document.getElementById("resultsEmpty").hidden = true;
+  document.getElementById("loadFingerprint").hidden = true;
+  document.getElementById("saveImageBtn").hidden = true;
 
   for (const { material, quantity, weight } of itemResults) {
     appendResultRow(
@@ -1100,6 +1102,130 @@ function renderResults(data) {
   document.getElementById("copyResultBtn").hidden = false;
   document.getElementById("exportCsvBtn").hidden = false;
   renderSupportComparison(data);
+  renderLoadFingerprint(data);
+}
+
+// ---- Load Fingerprint ----
+
+const TYPE_COLORS = { rigid: "rigid", loose: "loose", stackable: "stackable" };
+
+function renderLoadFingerprint(data) {
+  const {
+    itemResults,
+    totalWeight,
+    limit,
+    ratio,
+    safe,
+    distribution,
+    supportType,
+    safetyFactor: sf,
+    limitOverride,
+  } = data;
+
+  const el = document.getElementById("loadFingerprint");
+  el.innerHTML = "";
+
+  const card = document.createElement("div");
+  card.className = "fingerprint-card";
+  card.id = "fingerprintCard";
+
+  // Status badge
+  const pct = (ratio * 100).toFixed(0);
+  let statusLabel, statusMod;
+  if (!safe) {
+    statusLabel = "OVERLOADED";
+    statusMod = "fingerprint-status-fail";
+  } else if (ratio > 0.9) {
+    statusLabel = "WARN";
+    statusMod = "fingerprint-status-warn";
+  } else {
+    statusLabel = "PASS";
+    statusMod = "fingerprint-status-pass";
+  }
+  const statusEl = document.createElement("div");
+  statusEl.className = `fingerprint-status ${statusMod}`;
+  statusEl.innerHTML =
+    `<span class="fingerprint-status-label">${statusLabel}</span>` +
+    `<span class="fingerprint-status-pct">${pct}% of limit used</span>`;
+  card.appendChild(statusEl);
+
+  // Horizontal bar chart
+  const bar = document.createElement("div");
+  bar.className = "fingerprint-bar";
+  for (const { material, weight } of itemResults) {
+    const w = totalWeight > 0 ? (weight / totalWeight) * 100 : 0;
+    const seg = document.createElement("div");
+    seg.className = `fingerprint-segment fingerprint-seg-${TYPE_COLORS[material.type] || "rigid"}`;
+    seg.style.width = `${w}%`;
+    seg.title = `${material.name}: ${toDisplay(weight, 1)}`;
+    seg.textContent = material.name;
+    bar.appendChild(seg);
+  }
+  card.appendChild(bar);
+
+  // Legend
+  const seenTypes = [
+    ...new Set(itemResults.map((r) => r.material.type || "rigid")),
+  ];
+  const legend = document.createElement("div");
+  legend.className = "fingerprint-legend";
+  for (const t of seenTypes) {
+    legend.innerHTML +=
+      `<span class="fingerprint-legend-item">` +
+      `<span class="fingerprint-legend-dot fingerprint-seg-${t}"></span>` +
+      `<span class="fingerprint-legend-label">${t.charAt(0).toUpperCase() + t.slice(1)}</span>` +
+      `</span>`;
+  }
+  card.appendChild(legend);
+
+  // Summary grid
+  const supportLabel =
+    supportType === "custom"
+      ? `Custom (${toDisplay(limitOverride, 0)})`
+      : supportType.charAt(0).toUpperCase() + supportType.slice(1);
+  const distLabel =
+    distribution.charAt(0).toUpperCase() +
+    distribution.slice(1).replace("-", "-");
+
+  const summaryItems = [
+    { label: "Total Weight", value: toDisplay(totalWeight, 1) },
+    { label: "Adj. Limit", value: toDisplay(limit, 1) },
+    { label: "Support", value: supportLabel },
+    { label: "Distribution", value: distLabel },
+  ];
+  if (sf && sf > 1.0)
+    summaryItems.push({ label: "Safety Factor", value: `${sf}×` });
+
+  const summary = document.createElement("div");
+  summary.className = "fingerprint-summary";
+  for (const { label, value } of summaryItems) {
+    summary.innerHTML +=
+      `<div class="fingerprint-summary-item">` +
+      `<span class="fingerprint-summary-label">${label}</span>` +
+      `<span class="fingerprint-summary-value">${value}</span>` +
+      `</div>`;
+  }
+  card.appendChild(summary);
+
+  // Footer: timestamp + watermark
+  const now = new Date();
+  const tsStr = now.toLocaleString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const footer = document.createElement("div");
+  footer.className = "fingerprint-footer";
+  footer.innerHTML =
+    `<span class="fingerprint-timestamp">Checked ${tsStr}</span>` +
+    `<span class="fingerprint-watermark">LoadCalc v1.0</span>`;
+  card.appendChild(footer);
+
+  el.appendChild(card);
+  el.hidden = false;
+  document.getElementById("saveImageBtn").hidden = false;
 }
 
 // ---- Tooltips ----
@@ -1237,6 +1363,24 @@ document.getElementById("copyResultBtn").addEventListener("click", () => {
 });
 
 document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
+
+document.getElementById("saveImageBtn").addEventListener("click", () => {
+  const card = document.getElementById("fingerprintCard");
+  if (!card) return;
+  if (typeof html2canvas === "undefined") {
+    alert(
+      "Image export is unavailable offline. Please reconnect and try again.",
+    );
+    return;
+  }
+  const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 16);
+  html2canvas(card, { backgroundColor: "#ffffff", scale: 2 }).then((canvas) => {
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `load-check-${ts}.png`;
+    a.click();
+  });
+});
 
 document.getElementById("shareLoadBtn").addEventListener("click", shareLoad);
 

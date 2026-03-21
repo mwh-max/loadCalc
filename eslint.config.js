@@ -29,6 +29,7 @@ export default [
         setInterval: "readonly",
         URL: "readonly",
         Blob: "readonly",
+        html2canvas: "readonly",
         URLSearchParams: "readonly",
         location: "readonly",
       },

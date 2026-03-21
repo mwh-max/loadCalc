@@ -1183,6 +1183,138 @@ textarea:focus {
   margin: 8px 0 0;
 }
 
+/* --- Load Fingerprint card --- */
+#loadFingerprint {
+  margin-top: 16px;
+}
+.fingerprint-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  font-family: "Oswald", system-ui, sans-serif;
+  color: #111827;
+}
+.fingerprint-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.fingerprint-status-pass {
+  background: #dcfce7;
+}
+.fingerprint-status-warn {
+  background: #fef9c3;
+}
+.fingerprint-status-fail {
+  background: #fee2e2;
+}
+.fingerprint-status-label {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #111827;
+}
+.fingerprint-status-pct {
+  font-size: 13px;
+  color: #374151;
+}
+.fingerprint-bar {
+  display: flex;
+  height: 30px;
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.fingerprint-segment {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 4px;
+}
+.fingerprint-seg-rigid {
+  background: #3b82f6;
+}
+.fingerprint-seg-loose {
+  background: #f59e0b;
+}
+.fingerprint-seg-stackable {
+  background: #14b8a6;
+}
+.fingerprint-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.fingerprint-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.fingerprint-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.fingerprint-legend-label {
+  font-size: 11px;
+  color: #6b7280;
+}
+.fingerprint-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding: 10px 0;
+  border-top: 1px solid #e5e7eb;
+}
+.fingerprint-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fingerprint-summary-label {
+  font-size: 10px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.fingerprint-summary-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+.fingerprint-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+}
+.fingerprint-timestamp {
+  font-size: 11px;
+  color: #6b7280;
+}
+.fingerprint-watermark {
+  font-size: 10px;
+  font-weight: 600;
+  color: #d1d5db;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* --- Print styles --- */
 @media print {
   body {
