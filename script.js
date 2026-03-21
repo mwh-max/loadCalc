@@ -112,17 +112,31 @@ function renderPresets() {
 }
 
 function savePreset(name) {
+  clearInlineError("presetError");
+
   if (!name.trim()) {
-    alert("Please enter a preset name.");
+    showInlineError("presetError", "Please enter a preset name.");
     return;
   }
   if (loadItems.length === 0) {
-    alert("Add at least one item to the load before saving a preset.");
+    showInlineError(
+      "presetError",
+      "Add at least one item before saving a preset.",
+    );
     return;
   }
+
+  const presets = getPresets();
+  if (presets.some((p) => p.name.toLowerCase() === name.trim().toLowerCase())) {
+    showInlineError(
+      "presetError",
+      `A preset named "${name.trim()}" already exists.`,
+    );
+    return;
+  }
+
   const distribution = document.getElementById("distribution").value;
   const supportType = document.getElementById("support").value;
-  const presets = getPresets();
   presets.push({
     name: name.trim(),
     items: loadItems.map(({ material, quantity }) => ({
@@ -141,16 +155,30 @@ function loadPreset(index) {
   const preset = getPresets()[index];
   if (!preset) return;
 
+  const skipped = [];
   const resolved = preset.items
     .map(({ materialName, quantity }) => {
       const material = materials.find((m) => m.name === materialName);
+      if (!material) skipped.push(materialName);
       return material ? { material, quantity } : null;
     })
     .filter(Boolean);
 
   if (resolved.length === 0) {
-    alert("None of the materials in this preset could be found.");
+    showInlineError(
+      "presetError",
+      "None of the materials in this preset could be found.",
+    );
     return;
+  }
+
+  if (skipped.length > 0) {
+    showInlineError(
+      "presetError",
+      `${skipped.length} item(s) could not be found and were skipped: ${skipped.join(", ")}.`,
+    );
+  } else {
+    clearInlineError("presetError");
   }
 
   loadItems = resolved;
@@ -178,6 +206,7 @@ let materials = [...BASE_MATERIALS, ...getCustomMaterials()];
 let loadItems = [];
 let editingIndex = null;
 let lastResultData = null;
+let calculationHistory = []; // max 3 entries
 
 // ---- DOM ----
 
@@ -503,6 +532,66 @@ function deleteCustomMaterial(index) {
   renderCustomMaterials();
 }
 
+// ---- History ----
+
+function addToHistory(data) {
+  calculationHistory.unshift({ ...data, timestamp: Date.now() });
+  if (calculationHistory.length > 3) calculationHistory.pop();
+  renderHistory();
+}
+
+function formatTimeAgo(ts) {
+  const secs = Math.floor((Date.now() - ts) / 1000);
+  if (secs < 60) return "just now";
+  const mins = Math.floor(secs / 60);
+  return `${mins} min ago`;
+}
+
+function renderHistory() {
+  const section = document.getElementById("historySection");
+  const list = document.getElementById("historyList");
+  list.innerHTML = "";
+
+  if (calculationHistory.length === 0) {
+    section.hidden = true;
+    return;
+  }
+
+  calculationHistory.forEach((entry) => {
+    const li = document.createElement("li");
+    li.className = "history-item";
+
+    const statusEl = document.createElement("span");
+    statusEl.className = "history-status";
+    const nearLimit = entry.safe && entry.ratio > 0.9;
+    if (!entry.safe) {
+      statusEl.textContent = "FAIL";
+      statusEl.classList.add("fail");
+    } else if (nearLimit) {
+      statusEl.textContent = "WARN";
+      statusEl.classList.add("warn");
+    } else {
+      statusEl.textContent = "PASS";
+      statusEl.classList.add("pass");
+    }
+
+    const detail = document.createElement("span");
+    detail.className = "history-detail";
+    detail.textContent = `${toDisplay(entry.totalWeight, 1)} / ${toDisplay(entry.limit, 1)} — ${entry.supportType}`;
+
+    const time = document.createElement("span");
+    time.className = "history-time";
+    time.textContent = formatTimeAgo(entry.timestamp);
+
+    li.appendChild(statusEl);
+    li.appendChild(detail);
+    li.appendChild(time);
+    list.appendChild(li);
+  });
+
+  section.hidden = false;
+}
+
 // ---- Results ----
 
 function appendResultRow(label, value) {
@@ -599,6 +688,8 @@ materialSelect.addEventListener("change", renderSelectedMaterialNotes);
 document.getElementById("addToLoadBtn").addEventListener("click", addToLoad);
 
 document.getElementById("clearLoadBtn").addEventListener("click", () => {
+  if (loadItems.length === 0) return;
+  if (!confirm("Clear all items from the load?")) return;
   loadItems = [];
   editingIndex = null;
   renderLoadItems();
@@ -658,6 +749,7 @@ document
   .getElementById("customMaterialForm")
   .addEventListener("submit", (e) => {
     e.preventDefault();
+    clearInlineError("cmError");
 
     const name = document.getElementById("cmName").value.trim();
     const unit = document.getElementById("cmUnit").value.trim();
@@ -671,7 +763,15 @@ document
       !Number.isFinite(weightPerUnit) ||
       weightPerUnit <= 0
     ) {
-      alert("Please fill in Name, Unit, and a positive Weight per Unit.");
+      showInlineError(
+        "cmError",
+        "Please fill in Name, Unit, and a positive Weight per Unit.",
+      );
+      return;
+    }
+
+    if (materials.some((m) => m.name.toLowerCase() === name.toLowerCase())) {
+      showInlineError("cmError", `A material named "${name}" already exists.`);
       return;
     }
 
@@ -718,5 +818,6 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   };
 
   renderResults(lastResultData);
+  addToHistory(lastResultData);
   renderSelectedMaterialNotes();
 });

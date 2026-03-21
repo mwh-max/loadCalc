@@ -165,6 +165,7 @@
                 Save Current Load
               </button>
             </div>
+            <div id="presetError" class="inline-error" hidden></div>
             <ul id="presetsList" class="preset-list"></ul>
           </details>
 
@@ -212,6 +213,7 @@
                 <label for="cmNotes">Notes (optional)</label>
                 <textarea id="cmNotes" placeholder="Handling notes…"></textarea>
               </div>
+              <div id="cmError" class="inline-error" hidden></div>
               <button type="submit" class="btn btn-secondary">Add Material</button>
             </form>
             <ul id="customMaterialsList" class="custom-list"></ul>
@@ -232,6 +234,11 @@
           >
             Copy Result
           </button>
+
+          <div id="historySection" hidden>
+            <h3 class="history-heading">Recent</h3>
+            <ul id="historyList" class="history-list"></ul>
+          </div>
 
           <p class="disclaimer small">
             Disclaimer: This tool provides general guidance only. Always confirm

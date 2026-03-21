@@ -23,6 +23,7 @@ export default [
         console: "readonly",
         localStorage: "readonly",
         alert: "readonly",
+        confirm: "readonly",
         navigator: "readonly",
         setTimeout: "readonly",
       },
