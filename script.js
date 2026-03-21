@@ -1242,3 +1242,21 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   addToHistory(lastResultData);
   renderSelectedMaterialNotes();
 });
+
+// ---- Service worker ----
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {
+    // Registration failed — app still works without offline support.
+  });
+}
+
+// ---- Online / offline indicator ----
+
+function updateOnlineStatus() {
+  document.getElementById("offlineBadge").hidden = navigator.onLine;
+}
+
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+updateOnlineStatus();

@@ -61,6 +61,21 @@ export default [
     },
   },
 
+  // Service worker (ServiceWorkerGlobalScope — no window/document)
+  {
+    files: ["sw.js"],
+    languageOptions: {
+      ecmaVersion: 2021,
+      sourceType: "module",
+      globals: {
+        self: "readonly",
+        caches: "readonly",
+        fetch: "readonly",
+        clients: "readonly",
+      },
+    },
+  },
+
   // Disable stylistic rules that conflict with Prettier
   configPrettier,
 ];

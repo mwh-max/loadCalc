@@ -12,6 +12,7 @@
       name="description"
       content="LoadCalc helps builders and site managers quickly check load safety with material weights, distribution, and support type."
     />
+    <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -21,6 +22,7 @@
           <div>
             <div class="title">LoadCalc</div>
             <div class="sub">Fast, on-site safety checks for common materials</div>
+            <span id="offlineBadge" class="offline-badge" hidden>● Offline</span>
           </div>
           <div class="unit-toggle" role="group" aria-label="Weight unit">
             <button type="button" id="unitLbs" class="unit-btn active">lbs</button>
