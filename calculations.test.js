@@ -4,6 +4,7 @@ import {
   supportLimits,
   DISTRIBUTION_FACTORS,
   calculateLoad,
+  calculateMixedLoad,
 } from "./calculations.js";
 
 // ---- Data integrity ----
@@ -173,5 +174,127 @@ describe("calculateLoad — invalid inputs", () => {
 
   it("throws for unknown support type", () => {
     expect(() => calculateLoad(cinder, 1, "even", "crane")).toThrow();
+  });
+});
+
+// ---- calculateMixedLoad ----
+
+describe("calculateMixedLoad — valid inputs", () => {
+  it("sums weights from multiple items", () => {
+    const items = [
+      { material: cinder, quantity: 2 }, // 70 lbs
+      { material: gravel, quantity: 1 }, // 100 lbs
+    ];
+    const { totalWeight } = calculateMixedLoad(items, "even", "truck");
+    expect(totalWeight).toBeCloseTo(170);
+  });
+
+  it("single item matches calculateLoad result", () => {
+    const items = [{ material: cinder, quantity: 4 }];
+    const mixed = calculateMixedLoad(items, "even", "scaffold");
+    const single = calculateLoad(cinder, 4, "even", "scaffold");
+    expect(mixed.totalWeight).toBeCloseTo(single.baseWeight);
+    expect(mixed.limit).toBeCloseTo(single.limit);
+    expect(mixed.ratio).toBeCloseTo(single.ratio);
+    expect(mixed.safe).toBe(single.safe);
+  });
+
+  it("applies distribution factor to combined weight", () => {
+    const items = [{ material: cinder, quantity: 1 }]; // 35 lbs
+    const { limit } = calculateMixedLoad(items, "top-heavy", "scaffold");
+    expect(limit).toBeCloseTo(300); // 500 * 0.6
+  });
+
+  it("returns itemResults with per-item weight", () => {
+    const items = [
+      { material: cinder, quantity: 2 },
+      { material: gravel, quantity: 3 },
+    ];
+    const { itemResults } = calculateMixedLoad(items, "even", "truck");
+    expect(itemResults[0].weight).toBeCloseTo(70); // 35 * 2
+    expect(itemResults[1].weight).toBeCloseTo(300); // 100 * 3
+  });
+
+  it("passes when combined load is under limit", () => {
+    const items = [
+      { material: cinder, quantity: 1 }, // 35 lbs
+      { material: cinder, quantity: 1 }, // 35 lbs — total 70 lbs < 500
+    ];
+    const { safe } = calculateMixedLoad(items, "even", "scaffold");
+    expect(safe).toBe(true);
+  });
+
+  it("fails when combined load exceeds limit", () => {
+    const items = [
+      { material: gravel, quantity: 3 }, // 300 lbs
+      { material: gravel, quantity: 3 }, // 300 lbs — total 600 > 500
+    ];
+    const { safe } = calculateMixedLoad(items, "even", "scaffold");
+    expect(safe).toBe(false);
+  });
+
+  it("fails when combined load exceeds off-center limit but not base limit", () => {
+    // 350 lbs < 500 (base) but > 375 (off-center limit)
+    const items = [{ material: gravel, quantity: 3.8 }]; // 380 lbs
+    const { safe: evenSafe } = calculateMixedLoad(items, "even", "scaffold");
+    const { safe: offCenterSafe } = calculateMixedLoad(
+      items,
+      "off-center",
+      "scaffold",
+    );
+    expect(evenSafe).toBe(true);
+    expect(offCenterSafe).toBe(false);
+  });
+});
+
+describe("calculateMixedLoad — invalid inputs", () => {
+  it("throws for empty items array", () => {
+    expect(() => calculateMixedLoad([], "even", "scaffold")).toThrow();
+  });
+
+  it("throws for non-array items", () => {
+    expect(() => calculateMixedLoad(null, "even", "scaffold")).toThrow();
+  });
+
+  it("throws for item with invalid material", () => {
+    expect(() =>
+      calculateMixedLoad([{ material: null, quantity: 1 }], "even", "scaffold"),
+    ).toThrow();
+  });
+
+  it("throws for item with zero quantity", () => {
+    expect(() =>
+      calculateMixedLoad(
+        [{ material: cinder, quantity: 0 }],
+        "even",
+        "scaffold",
+      ),
+    ).toThrow();
+  });
+
+  it("throws for item with negative quantity", () => {
+    expect(() =>
+      calculateMixedLoad(
+        [{ material: cinder, quantity: -1 }],
+        "even",
+        "scaffold",
+      ),
+    ).toThrow();
+  });
+
+  it("throws for unknown distribution type", () => {
+    expect(() =>
+      calculateMixedLoad(
+        [{ material: cinder, quantity: 1 }],
+        "diagonal",
+        "scaffold",
+      ),
+    ).toThrow();
+  });
+
+  it("throws for unknown support type", () => {
+    expect(() =>
+      calculateMixedLoad([{ material: cinder, quantity: 1 }], "even", "crane"),
+    ).toThrow();
   });
 });

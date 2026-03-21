@@ -55,7 +55,7 @@
 
             <div id="materialNotes" class="note" hidden></div>
 
-            <div class="row">
+            <div class="row row-add">
               <div>
                 <label for="quantity">Quantity / Volume</label>
                 <input
@@ -64,13 +64,33 @@
                   min="0"
                   step="0.01"
                   inputmode="decimal"
-                  required
                 />
               </div>
+              <div class="add-btn-col">
+                <button type="button" id="addToLoadBtn" class="btn btn-secondary">
+                  + Add to Load
+                </button>
+              </div>
+            </div>
+
+            <div id="loadItems" hidden>
+              <div class="load-items-header">
+                <span>Load Items</span>
+                <button type="button" id="clearLoadBtn" class="btn-ghost">
+                  Clear all
+                </button>
+              </div>
+              <ul id="loadItemsList" class="load-list"></ul>
+              <div class="load-total">
+                Running total: <strong id="loadTotalWeight">0</strong> lbs
+              </div>
+            </div>
+
+            <div class="row">
               <div>
                 <label for="distribution">Distribution</label>
                 <select id="distribution" required>
-                  <option value="">-- Select Distribution --</option>
+                  <option value="">-- Select --</option>
                   <option value="even">Even</option>
                   <option value="off-center">Off-Center</option>
                   <option value="top-heavy">Top-Heavy</option>
@@ -79,16 +99,61 @@
               <div>
                 <label for="support">Support</label>
                 <select id="support" required>
-                  <option value="">-- Select Support --</option>
-                  <option value="scaffold">Scaffold</option>
-                  <option value="hoist">Hoist</option>
-                  <option value="truck">Truck</option>
+                  <option value="">-- Select --</option>
+                  <option value="scaffold">Scaffold (500 lbs)</option>
+                  <option value="hoist">Hoist (1,000 lbs)</option>
+                  <option value="truck">Truck (5,000 lbs)</option>
                 </select>
               </div>
             </div>
 
             <button type="submit" class="btn">Calculate</button>
           </form>
+
+          <hr class="hr" />
+
+          <details class="custom-materials">
+            <summary>Custom Materials</summary>
+            <form id="customMaterialForm" novalidate>
+              <div class="row">
+                <div>
+                  <label for="cmName">Name</label>
+                  <input id="cmName" type="text" placeholder="e.g. Brick" />
+                </div>
+                <div>
+                  <label for="cmUnit">Unit</label>
+                  <input id="cmUnit" type="text" placeholder="ft, each, cubic ft" />
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label for="cmWeight">Weight per Unit (lbs)</label>
+                  <input
+                    id="cmWeight"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputmode="decimal"
+                    placeholder="e.g. 4.5"
+                  />
+                </div>
+                <div>
+                  <label for="cmType">Type</label>
+                  <select id="cmType">
+                    <option value="rigid">Rigid</option>
+                    <option value="loose">Loose</option>
+                    <option value="stackable">Stackable</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label for="cmNotes">Notes (optional)</label>
+                <textarea id="cmNotes" placeholder="Handling notes…"></textarea>
+              </div>
+              <button type="submit" class="btn btn-secondary">Add Material</button>
+            </form>
+            <ul id="customMaterialsList" class="custom-list"></ul>
+          </details>
         </section>
 
         <section class="card">

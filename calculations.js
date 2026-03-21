@@ -105,3 +105,42 @@ export function calculateLoad(material, quantity, distribution, supportType) {
 
   return { baseWeight, limit, ratio, safe };
 }
+
+/**
+ * Calculate load safety for a mixed list of materials against a single support.
+ *
+ * @param {Array<{material: object, quantity: number}>} items
+ * @param {string} distribution - One of: "even", "off-center", "top-heavy"
+ * @param {string} supportType - One of: "scaffold", "hoist", "truck"
+ * @returns {{ itemResults: Array, totalWeight: number, limit: number, ratio: number, safe: boolean }}
+ * @throws {Error} If any argument is invalid
+ */
+export function calculateMixedLoad(items, distribution, supportType) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("At least one item is required.");
+  }
+  if (!(distribution in DISTRIBUTION_FACTORS)) {
+    throw new Error(`Unknown distribution type: "${distribution}".`);
+  }
+  if (!(supportType in supportLimits)) {
+    throw new Error(`Unknown support type: "${supportType}".`);
+  }
+
+  const itemResults = items.map(({ material, quantity }) => {
+    if (!material || typeof material.weightPerUnit !== "number") {
+      throw new Error("Invalid material in load.");
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      throw new Error("All quantities must be positive numbers.");
+    }
+    return { material, quantity, weight: material.weightPerUnit * quantity };
+  });
+
+  const totalWeight = itemResults.reduce((sum, r) => sum + r.weight, 0);
+  const factor = DISTRIBUTION_FACTORS[distribution];
+  const limit = supportLimits[supportType] * factor;
+  const ratio = totalWeight / limit;
+  const safe = ratio <= 1;
+
+  return { itemResults, totalWeight, limit, ratio, safe };
+}
