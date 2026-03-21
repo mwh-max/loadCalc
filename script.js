@@ -957,6 +957,31 @@ function renderResults(data) {
   document.getElementById("exportCsvBtn").hidden = false;
 }
 
+// ---- Tooltips ----
+
+function openTooltip(id) {
+  document.querySelectorAll(".tooltip-btn").forEach((b) => {
+    if (b.dataset.tooltip !== id) {
+      b.setAttribute("aria-expanded", "false");
+      document.getElementById(b.dataset.tooltip).hidden = true;
+    }
+  });
+  const popover = document.getElementById(id);
+  const btn = document.querySelector(`[data-tooltip="${id}"]`);
+  const willOpen = popover.hidden;
+  popover.hidden = !willOpen;
+  btn.setAttribute("aria-expanded", String(willOpen));
+}
+
+function closeAllTooltips() {
+  document.querySelectorAll(".tooltip-popover").forEach((el) => {
+    el.hidden = true;
+  });
+  document.querySelectorAll(".tooltip-btn").forEach((btn) => {
+    btn.setAttribute("aria-expanded", "false");
+  });
+}
+
 // ---- Init ----
 
 updateMaterialOptions();
@@ -1102,7 +1127,21 @@ document.getElementById("materialModal").addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeMaterialModal();
+  if (e.key === "Escape") {
+    closeMaterialModal();
+    closeAllTooltips();
+  }
+});
+
+document.querySelectorAll(".tooltip-btn").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openTooltip(btn.dataset.tooltip);
+  });
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".tooltip-wrap")) closeAllTooltips();
 });
 
 document

@@ -911,6 +911,147 @@ textarea:focus {
   width: 100px;
 }
 
+/* --- Tooltip / popover --- */
+.tooltip-wrap {
+  position: relative;
+}
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.label-row label {
+  margin-bottom: 0;
+}
+.tooltip-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  margin: -13px -6px; /* collapse visual gap; tap area stays 44px */
+}
+.tooltip-btn-inner {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #4b5563;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  line-height: 1;
+  pointer-events: none;
+  flex-shrink: 0;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.tooltip-btn:hover .tooltip-btn-inner,
+.tooltip-btn[aria-expanded="true"] .tooltip-btn-inner {
+  background: #374151;
+  color: var(--text);
+  border-color: #6b7280;
+}
+.tooltip-popover {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  width: min(280px, calc(100vw - 32px));
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 12px;
+  padding: 12px;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.tip-right .tooltip-popover {
+  left: auto;
+  right: 0;
+}
+.tip-heading {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 0 0 8px;
+}
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid #1f2937;
+}
+.tip-item:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+.tip-svg {
+  width: 80px;
+  height: auto;
+  flex-shrink: 0;
+}
+.tip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 2px;
+}
+.tip-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+.tip-ok {
+  color: var(--ok);
+}
+.tip-warn {
+  color: var(--warn);
+}
+.tip-fail {
+  color: #f87171;
+}
+.tip-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.tip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tip-list li {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.tip-list li strong {
+  color: var(--text);
+}
+.tip-note {
+  font-size: 11px;
+  color: #4b5563;
+  font-style: italic;
+  margin: 8px 0 0;
+}
+
 /* --- Print styles --- */
 @media print {
   body {
