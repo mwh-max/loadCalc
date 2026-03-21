@@ -247,6 +247,82 @@ describe("calculateMixedLoad — valid inputs", () => {
   });
 });
 
+describe("calculateLoad — limitOverride and safetyFactor options", () => {
+  it("uses limitOverride when supportType is custom", () => {
+    const { limit } = calculateLoad(cinder, 1, "even", "custom", {
+      limitOverride: 800,
+    });
+    expect(limit).toBeCloseTo(800);
+  });
+
+  it("applies distribution factor to custom limit", () => {
+    const { limit } = calculateLoad(cinder, 1, "off-center", "custom", {
+      limitOverride: 1000,
+    });
+    expect(limit).toBeCloseTo(750); // 1000 * 0.75
+  });
+
+  it("applies safetyFactor to reduce effective limit", () => {
+    const { limit } = calculateLoad(cinder, 1, "even", "scaffold", {
+      safetyFactor: 2.0,
+    });
+    expect(limit).toBeCloseTo(250); // 500 / 2.0
+  });
+
+  it("safetyFactor and distribution factor both apply", () => {
+    const { limit } = calculateLoad(cinder, 1, "off-center", "scaffold", {
+      safetyFactor: 1.5,
+    });
+    expect(limit).toBeCloseTo(250); // (500 * 0.75) / 1.5
+  });
+
+  it("throws for custom support without limitOverride", () => {
+    expect(() => calculateLoad(cinder, 1, "even", "custom")).toThrow();
+  });
+
+  it("throws for custom support with zero limitOverride", () => {
+    expect(() =>
+      calculateLoad(cinder, 1, "even", "custom", { limitOverride: 0 }),
+    ).toThrow();
+  });
+
+  it("throws for safetyFactor less than 1.0", () => {
+    expect(() =>
+      calculateLoad(cinder, 1, "even", "scaffold", { safetyFactor: 0.5 }),
+    ).toThrow();
+  });
+});
+
+describe("calculateMixedLoad — limitOverride and safetyFactor options", () => {
+  it("uses custom limit with limitOverride", () => {
+    const items = [{ material: cinder, quantity: 1 }];
+    const { limit } = calculateMixedLoad(items, "even", "custom", {
+      limitOverride: 600,
+    });
+    expect(limit).toBeCloseTo(600);
+  });
+
+  it("applies safetyFactor to mixed load", () => {
+    const items = [{ material: cinder, quantity: 1 }];
+    const { limit } = calculateMixedLoad(items, "even", "scaffold", {
+      safetyFactor: 1.5,
+    });
+    expect(limit).toBeCloseTo(333.33); // 500 / 1.5
+  });
+
+  it("throws for custom support without limitOverride", () => {
+    const items = [{ material: cinder, quantity: 1 }];
+    expect(() => calculateMixedLoad(items, "even", "custom")).toThrow();
+  });
+
+  it("throws for safetyFactor less than 1.0", () => {
+    const items = [{ material: cinder, quantity: 1 }];
+    expect(() =>
+      calculateMixedLoad(items, "even", "scaffold", { safetyFactor: 0.8 }),
+    ).toThrow();
+  });
+});
+
 describe("calculateMixedLoad — invalid inputs", () => {
   it("throws for empty items array", () => {
     expect(() => calculateMixedLoad([], "even", "scaffold")).toThrow();

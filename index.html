@@ -60,6 +60,10 @@
                 <input type="checkbox" class="typeFilter" value="stackable" />
                 Stackable
               </label>
+              <label>
+                <input type="checkbox" id="favoritesFilter" />
+                ★ Favorites
+              </label>
             </fieldset>
 
             <label for="material">Material</label>
@@ -68,6 +72,27 @@
             </select>
 
             <div id="materialNotes" class="note" hidden></div>
+
+            <div class="material-actions">
+              <button
+                type="button"
+                id="materialDetailBtn"
+                class="btn-ghost"
+                hidden
+                aria-label="Material details"
+              >
+                ℹ Details
+              </button>
+              <button
+                type="button"
+                id="toggleFavoriteBtn"
+                class="btn-star"
+                hidden
+                aria-label="Toggle favorite"
+              >
+                ☆
+              </button>
+            </div>
 
             <div class="row row-add">
               <div>
@@ -135,7 +160,39 @@
                   <option value="scaffold" id="optScaffold">Scaffold</option>
                   <option value="hoist" id="optHoist">Hoist</option>
                   <option value="truck" id="optTruck">Truck</option>
+                  <option value="custom">Custom…</option>
                 </select>
+              </div>
+            </div>
+
+            <div id="customLimitRow" class="row" hidden>
+              <div>
+                <label for="customLimit">Custom Limit (lbs)</label>
+                <input
+                  id="customLimit"
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputmode="decimal"
+                  placeholder="e.g. 2000"
+                />
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label for="safetyFactor">Safety Factor</label>
+                <input
+                  id="safetyFactor"
+                  type="number"
+                  min="1"
+                  step="0.1"
+                  value="1.0"
+                  inputmode="decimal"
+                />
+                <div class="field-hint">
+                  Divides effective limit (≥ 1.0). Use 1.5 for extra caution.
+                </div>
               </div>
             </div>
 
@@ -146,9 +203,29 @@
               <span>Review &amp; Calculate</span>
             </div>
 
-            <button type="submit" id="calculateBtn" class="btn" disabled>
-              Calculate
-            </button>
+            <div class="action-row">
+              <button type="submit" id="calculateBtn" class="btn" disabled>
+                Calculate
+              </button>
+              <button type="button" id="shareLoadBtn" class="btn btn-secondary">
+                Share
+              </button>
+            </div>
+
+            <div id="qrSection" hidden>
+              <div class="qr-url">
+                <span id="shareUrl" class="qr-url-text"></span>
+                <button type="button" id="copyShareUrlBtn" class="btn-ghost">
+                  Copy
+                </button>
+              </div>
+              <img
+                id="qrImage"
+                class="qr-img"
+                src=""
+                alt="QR code for shared load"
+              />
+            </div>
           </form>
 
           <hr class="hr" />
@@ -234,6 +311,14 @@
           >
             Copy Result
           </button>
+          <button
+            type="button"
+            id="exportCsvBtn"
+            class="btn btn-secondary btn-copy"
+            hidden
+          >
+            Export CSV
+          </button>
 
           <div id="historySection" hidden>
             <h3 class="history-heading">Recent</h3>
@@ -247,6 +332,30 @@
           <p class="small">LoadCalc v1.0.0</p>
         </section>
       </main>
+    </div>
+
+    <div
+      id="materialModal"
+      class="modal-overlay"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 id="modalTitle" class="modal-title"></h3>
+          <button
+            type="button"
+            id="modalClose"
+            class="btn-remove"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+        <div id="modalBody" class="modal-body"></div>
+      </div>
     </div>
 
     <script type="module" src="script.js"></script>

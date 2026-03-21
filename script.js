@@ -42,10 +42,13 @@ function clearInlineError(id) {
   el.hidden = true;
 }
 
-// ---- Custom materials (localStorage) ----
+// ---- Storage keys ----
 
 const STORAGE_KEY = "loadCalc_customMaterials";
 const PRESETS_KEY = "loadCalc_presets";
+const FAVORITES_KEY = "loadCalc_favorites";
+
+// ---- Custom materials (localStorage) ----
 
 function getCustomMaterials() {
   try {
@@ -62,6 +65,51 @@ function saveCustomMaterials(list) {
 function refreshMaterials() {
   materials = [...BASE_MATERIALS, ...getCustomMaterials()];
   updateMaterialOptions(materialSearch.value);
+}
+
+// ---- Favorites ----
+
+function getFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveFavorites(list) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
+}
+
+function isFavorite(name) {
+  return getFavorites().includes(name);
+}
+
+function toggleFavorite(name) {
+  const favs = getFavorites();
+  const idx = favs.indexOf(name);
+  if (idx === -1) favs.push(name);
+  else favs.splice(idx, 1);
+  saveFavorites(favs);
+  renderFavoriteBtn();
+  updateMaterialOptions(materialSearch.value);
+}
+
+function renderFavoriteBtn() {
+  const btn = document.getElementById("toggleFavoriteBtn");
+  const name = materialSelect.value;
+  if (!name) {
+    btn.hidden = true;
+    return;
+  }
+  btn.hidden = false;
+  const fav = isFavorite(name);
+  btn.textContent = fav ? "★" : "☆";
+  btn.setAttribute(
+    "aria-label",
+    fav ? "Remove from favorites" : "Add to favorites",
+  );
+  btn.classList.toggle("is-favorite", fav);
 }
 
 // ---- Presets (localStorage) ----
@@ -237,6 +285,22 @@ function updateDistributionHint() {
 
 // ---- Gauge ----
 
+function getEffectiveLimit(supportType, factor) {
+  const customLimitVal = parseFloat(
+    document.getElementById("customLimit").value,
+  );
+  const safetyFactorVal = parseFloat(
+    document.getElementById("safetyFactor").value,
+  );
+  const baseLimit =
+    supportType === "custom" ? customLimitVal : supportLimits[supportType];
+  const sf =
+    Number.isFinite(safetyFactorVal) && safetyFactorVal >= 1.0
+      ? safetyFactorVal
+      : 1.0;
+  return (baseLimit * factor) / sf;
+}
+
 function updateGauge() {
   const gaugeEl = document.getElementById("gauge");
   const gaugeBar = document.getElementById("gaugeBar");
@@ -249,12 +313,26 @@ function updateGauge() {
     return;
   }
 
+  if (supportType === "custom") {
+    const cl = parseFloat(document.getElementById("customLimit").value);
+    if (!Number.isFinite(cl) || cl <= 0) {
+      gaugeEl.hidden = true;
+      return;
+    }
+  }
+
   const totalWeight = loadItems.reduce(
     (sum, { material, quantity }) => sum + material.weightPerUnit * quantity,
     0,
   );
   const factor = DISTRIBUTION_FACTORS[distribution] ?? 1.0;
-  const limit = supportLimits[supportType] * factor;
+  const limit = getEffectiveLimit(supportType, factor);
+
+  if (!Number.isFinite(limit) || limit <= 0) {
+    gaugeEl.hidden = true;
+    return;
+  }
+
   const ratio = totalWeight / limit;
   const pct = Math.min(ratio * 100, 100);
 
@@ -280,7 +358,11 @@ function renderSelectedMaterialNotes() {
   notesEl.hidden = true;
   notesEl.textContent = "";
 
-  if (!selectedName) return;
+  if (!selectedName) {
+    renderFavoriteBtn();
+    document.getElementById("materialDetailBtn").hidden = true;
+    return;
+  }
 
   const m = materials.find((x) => x.name === selectedName);
   let noteText = m?.notes || "No notes.";
@@ -300,6 +382,49 @@ function renderSelectedMaterialNotes() {
 
   notesEl.textContent = noteText;
   notesEl.hidden = false;
+  renderFavoriteBtn();
+  document.getElementById("materialDetailBtn").hidden = false;
+}
+
+// ---- Material detail modal ----
+
+function showMaterialModal(material) {
+  if (!material) return;
+  document.getElementById("modalTitle").textContent = material.name;
+
+  const body = document.getElementById("modalBody");
+  body.innerHTML = "";
+
+  const rows = [
+    ["Unit", material.unit],
+    ["Weight per unit", `${material.weightPerUnit} lbs`],
+    ["Type", material.type],
+  ];
+  if (material.aliases?.length)
+    rows.push(["Also known as", material.aliases.join(", ")]);
+  if (material.tags?.length) rows.push(["Tags", material.tags.join(", ")]);
+  if (material.notes) rows.push(["Notes", material.notes]);
+
+  rows.forEach(([label, value]) => {
+    const row = document.createElement("div");
+    row.className = "modal-row";
+    const lbl = document.createElement("span");
+    lbl.className = "modal-label";
+    lbl.textContent = label;
+    const val = document.createElement("span");
+    val.textContent = value;
+    row.appendChild(lbl);
+    row.appendChild(val);
+    body.appendChild(row);
+  });
+
+  document.getElementById("materialModal").hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeMaterialModal() {
+  document.getElementById("materialModal").hidden = true;
+  document.body.style.overflow = "";
 }
 
 // ---- Material select filter ----
@@ -307,6 +432,8 @@ function renderSelectedMaterialNotes() {
 function updateMaterialOptions(filter = "") {
   const current = materialSelect.value;
   const selectedTypes = getSelectedTypes();
+  const favOnly = document.getElementById("favoritesFilter")?.checked;
+  const favs = getFavorites();
 
   materialSelect.innerHTML = '<option value="">-- Select Material --</option>';
 
@@ -338,17 +465,61 @@ function updateMaterialOptions(filter = "") {
     );
   }
 
+  if (favOnly) {
+    filtered = filtered.filter((m) => favs.includes(m.name));
+  }
+
   if (current && !filtered.some((m) => m.name === current)) {
     const keep = materials.find((m) => m.name === current);
     if (keep) filtered = [keep, ...filtered];
   }
 
-  for (const m of filtered) {
-    const opt = document.createElement("option");
-    opt.value = m.name;
-    opt.textContent = `${m.name} (${m.unit})`;
-    if (m.name === current) opt.selected = true;
-    materialSelect.appendChild(opt);
+  // Pin favorites to top when not in favorites-only mode
+  if (!favOnly && favs.length > 0) {
+    const favItems = filtered.filter((m) => favs.includes(m.name));
+    const nonFavItems = filtered.filter((m) => !favs.includes(m.name));
+
+    if (favItems.length > 0) {
+      const favGroup = document.createElement("optgroup");
+      favGroup.label = "★ Favorites";
+      for (const m of favItems) {
+        const opt = document.createElement("option");
+        opt.value = m.name;
+        opt.textContent = `${m.name} (${m.unit})`;
+        if (m.name === current) opt.selected = true;
+        favGroup.appendChild(opt);
+      }
+      materialSelect.appendChild(favGroup);
+
+      if (nonFavItems.length > 0) {
+        const restGroup = document.createElement("optgroup");
+        restGroup.label = "All Materials";
+        for (const m of nonFavItems) {
+          const opt = document.createElement("option");
+          opt.value = m.name;
+          opt.textContent = `${m.name} (${m.unit})`;
+          if (m.name === current) opt.selected = true;
+          restGroup.appendChild(opt);
+        }
+        materialSelect.appendChild(restGroup);
+      }
+    } else {
+      for (const m of filtered) {
+        const opt = document.createElement("option");
+        opt.value = m.name;
+        opt.textContent = `${m.name} (${m.unit})`;
+        if (m.name === current) opt.selected = true;
+        materialSelect.appendChild(opt);
+      }
+    }
+  } else {
+    for (const m of filtered) {
+      const opt = document.createElement("option");
+      opt.value = m.name;
+      opt.textContent = `${m.name} (${m.unit})`;
+      if (m.name === current) opt.selected = true;
+      materialSelect.appendChild(opt);
+    }
   }
 
   renderSelectedMaterialNotes();
@@ -498,6 +669,11 @@ function removeFromLoad(index) {
 
 // ---- Custom materials ----
 
+function updateCmWeightLabel() {
+  const label = document.querySelector("label[for='cmWeight']");
+  if (label) label.textContent = `Weight per Unit (${currentUnit})`;
+}
+
 function renderCustomMaterials() {
   const list = document.getElementById("customMaterialsList");
   list.innerHTML = "";
@@ -509,7 +685,7 @@ function renderCustomMaterials() {
     li.className = "custom-material-item";
 
     const span = document.createElement("span");
-    span.textContent = `${m.name} — ${m.weightPerUnit} lbs/${m.unit} (${m.type})`;
+    span.textContent = `${m.name} — ${toDisplay(m.weightPerUnit, 2)}/${m.unit} (${m.type})`;
 
     const btn = document.createElement("button");
     btn.type = "button";
@@ -592,6 +768,124 @@ function renderHistory() {
   section.hidden = false;
 }
 
+// Refresh history timestamps every 30 seconds
+setInterval(renderHistory, 30000);
+
+// ---- Share load ----
+
+function shareLoad() {
+  clearInlineError("calcError");
+  if (loadItems.length === 0) {
+    showInlineError("calcError", "Add items to the load before sharing.");
+    return;
+  }
+
+  const distribution = document.getElementById("distribution").value;
+  const supportType = document.getElementById("support").value;
+  const customLimit = document.getElementById("customLimit").value;
+  const safetyFactor = document.getElementById("safetyFactor").value;
+
+  const params = new URLSearchParams();
+  if (distribution) params.set("d", distribution);
+  if (supportType) params.set("s", supportType);
+  if (supportType === "custom" && customLimit) params.set("cl", customLimit);
+  const sfVal = parseFloat(safetyFactor);
+  if (Number.isFinite(sfVal) && sfVal !== 1.0) params.set("sf", safetyFactor);
+
+  loadItems.forEach(({ material, quantity }, i) => {
+    params.set(`m${i}`, material.name);
+    params.set(`q${i}`, String(quantity));
+  });
+
+  const url = `${location.origin}${location.pathname}?${params.toString()}`;
+  document.getElementById("shareUrl").textContent = url;
+  document.getElementById("qrImage").src =
+    `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+  document.getElementById("qrSection").hidden = false;
+}
+
+// ---- CSV export ----
+
+function exportCSV() {
+  if (!lastResultData) return;
+  const {
+    itemResults,
+    totalWeight,
+    limit,
+    ratio,
+    safe,
+    distribution,
+    supportType,
+  } = lastResultData;
+
+  const rows = [
+    ["Material", "Quantity", "Unit", "Weight (lbs)"],
+    ...itemResults.map(({ material, quantity, weight }) => [
+      material.name,
+      quantity,
+      material.unit,
+      weight.toFixed(2),
+    ]),
+    [],
+    ["Total Weight (lbs)", totalWeight.toFixed(2)],
+    ["Distribution", distribution],
+    ["Support", supportType],
+    ["Adjusted Limit (lbs)", limit.toFixed(2)],
+    ["Load %", `${(ratio * 100).toFixed(0)}%`],
+    ["Status", safe ? "PASS" : "OVERLOADED"],
+  ];
+
+  const csv = rows.map((r) => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "load-report.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---- Load from shared URL ----
+
+function loadFromUrl() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has("m0")) return;
+
+  const items = [];
+  let i = 0;
+  while (params.has(`m${i}`)) {
+    const name = params.get(`m${i}`);
+    const qty = parseFloat(params.get(`q${i}`));
+    const mat = materials.find((m) => m.name === name);
+    if (mat && Number.isFinite(qty) && qty > 0) {
+      items.push({ material: mat, quantity: qty });
+    }
+    i++;
+  }
+
+  if (items.length === 0) return;
+
+  loadItems = items;
+  const dist = params.get("d");
+  const sup = params.get("s");
+  const cl = params.get("cl");
+  const sf = params.get("sf");
+
+  if (dist) document.getElementById("distribution").value = dist;
+  if (sup) {
+    document.getElementById("support").value = sup;
+    if (sup === "custom") {
+      document.getElementById("customLimitRow").hidden = false;
+    }
+  }
+  if (cl) document.getElementById("customLimit").value = cl;
+  if (sf) document.getElementById("safetyFactor").value = sf;
+
+  renderLoadItems();
+  if (dist) updateDistributionHint();
+  updateGauge();
+}
+
 // ---- Results ----
 
 function appendResultRow(label, value) {
@@ -612,6 +906,8 @@ function renderResults(data) {
     safe,
     distribution,
     supportType,
+    safetyFactor: sf,
+    limitOverride,
   } = data;
 
   resultsEl.className = "results";
@@ -632,7 +928,13 @@ function renderResults(data) {
 
   appendResultRow("Total Weight", toDisplay(totalWeight, 2));
   appendResultRow("Distribution", distribution);
-  appendResultRow("Support", supportType);
+  appendResultRow(
+    "Support",
+    supportType === "custom"
+      ? `Custom (${toDisplay(limitOverride, 0)} base)`
+      : supportType,
+  );
+  if (sf && sf > 1.0) appendResultRow("Safety Factor", `${sf}×`);
   appendResultRow("Adjusted Limit", toDisplay(limit, 2));
   appendResultRow(
     "Status",
@@ -652,6 +954,7 @@ function renderResults(data) {
   }
 
   document.getElementById("copyResultBtn").hidden = false;
+  document.getElementById("exportCsvBtn").hidden = false;
 }
 
 // ---- Init ----
@@ -659,8 +962,10 @@ function renderResults(data) {
 updateMaterialOptions();
 updateSupportLabels();
 updateCalculateBtn();
+updateCmWeightLabel();
 renderCustomMaterials();
 renderPresets();
+loadFromUrl();
 
 document
   .getElementById("unitLbs")
@@ -683,6 +988,12 @@ document
     ),
   );
 
+document
+  .getElementById("favoritesFilter")
+  .addEventListener("change", () =>
+    updateMaterialOptions(materialSearch.value),
+  );
+
 materialSelect.addEventListener("change", renderSelectedMaterialNotes);
 
 document.getElementById("addToLoadBtn").addEventListener("click", addToLoad);
@@ -703,8 +1014,13 @@ document.getElementById("distribution").addEventListener("change", () => {
 
 document.getElementById("support").addEventListener("change", () => {
   clearInlineError("calcError");
+  const isCustom = document.getElementById("support").value === "custom";
+  document.getElementById("customLimitRow").hidden = !isCustom;
   updateGauge();
 });
+
+document.getElementById("customLimit").addEventListener("input", updateGauge);
+document.getElementById("safetyFactor").addEventListener("input", updateGauge);
 
 document.getElementById("unitLbs").addEventListener("click", () => {
   currentUnit = "lbs";
@@ -712,7 +1028,9 @@ document.getElementById("unitLbs").addEventListener("click", () => {
   document.getElementById("unitLbs").classList.add("active");
   document.getElementById("unitKg").classList.remove("active");
   updateSupportLabels();
+  updateCmWeightLabel();
   renderLoadItems();
+  renderCustomMaterials();
   if (lastResultData) renderResults(lastResultData);
 });
 
@@ -722,7 +1040,9 @@ document.getElementById("unitKg").addEventListener("click", () => {
   document.getElementById("unitKg").classList.add("active");
   document.getElementById("unitLbs").classList.remove("active");
   updateSupportLabels();
+  updateCmWeightLabel();
   renderLoadItems();
+  renderCustomMaterials();
   if (lastResultData) renderResults(lastResultData);
 });
 
@@ -745,6 +1065,46 @@ document.getElementById("copyResultBtn").addEventListener("click", () => {
   });
 });
 
+document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
+
+document.getElementById("shareLoadBtn").addEventListener("click", shareLoad);
+
+document.getElementById("copyShareUrlBtn").addEventListener("click", () => {
+  const url = document.getElementById("shareUrl").textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById("copyShareUrlBtn");
+    const orig = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => {
+      btn.textContent = orig;
+    }, 2000);
+  });
+});
+
+document.getElementById("toggleFavoriteBtn").addEventListener("click", () => {
+  const name = materialSelect.value;
+  if (name) toggleFavorite(name);
+});
+
+document.getElementById("materialDetailBtn").addEventListener("click", () => {
+  const name = materialSelect.value;
+  const m = materials.find((x) => x.name === name);
+  if (m) showMaterialModal(m);
+});
+
+document
+  .getElementById("modalClose")
+  .addEventListener("click", closeMaterialModal);
+
+document.getElementById("materialModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("materialModal"))
+    closeMaterialModal();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeMaterialModal();
+});
+
 document
   .getElementById("customMaterialForm")
   .addEventListener("submit", (e) => {
@@ -753,16 +1113,11 @@ document
 
     const name = document.getElementById("cmName").value.trim();
     const unit = document.getElementById("cmUnit").value.trim();
-    const weightPerUnit = parseFloat(document.getElementById("cmWeight").value);
+    const rawWeight = parseFloat(document.getElementById("cmWeight").value);
     const type = document.getElementById("cmType").value;
     const notes = document.getElementById("cmNotes").value.trim();
 
-    if (
-      !name ||
-      !unit ||
-      !Number.isFinite(weightPerUnit) ||
-      weightPerUnit <= 0
-    ) {
+    if (!name || !unit || !Number.isFinite(rawWeight) || rawWeight <= 0) {
       showInlineError(
         "cmError",
         "Please fill in Name, Unit, and a positive Weight per Unit.",
@@ -774,6 +1129,10 @@ document
       showInlineError("cmError", `A material named "${name}" already exists.`);
       return;
     }
+
+    // Convert kg input to lbs for storage when in kg mode
+    const weightPerUnit =
+      currentUnit === "kg" ? rawWeight / KG_PER_LB : rawWeight;
 
     const list = getCustomMaterials();
     list.push({ name, unit, weightPerUnit, type, notes: notes || undefined });
@@ -791,6 +1150,12 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
   clearInlineError("calcError");
   const distribution = document.getElementById("distribution").value;
   const supportType = document.getElementById("support").value;
+  const customLimitVal = parseFloat(
+    document.getElementById("customLimit").value,
+  );
+  const safetyFactorVal = parseFloat(
+    document.getElementById("safetyFactor").value,
+  );
 
   if (!distribution || !supportType) {
     showInlineError(
@@ -800,10 +1165,25 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
     return;
   }
 
+  if (
+    supportType === "custom" &&
+    (!Number.isFinite(customLimitVal) || customLimitVal <= 0)
+  ) {
+    showInlineError("calcError", "Please enter a positive custom limit.");
+    return;
+  }
+
+  const options = {};
+  if (supportType === "custom") options.limitOverride = customLimitVal;
+  if (Number.isFinite(safetyFactorVal) && safetyFactorVal >= 1.0) {
+    options.safetyFactor = safetyFactorVal;
+  }
+
   const { itemResults, totalWeight, limit, ratio, safe } = calculateMixedLoad(
     loadItems,
     distribution,
     supportType,
+    options,
   );
 
   lastResultData = {
@@ -814,6 +1194,8 @@ document.getElementById("loadForm").addEventListener("submit", (e) => {
     safe,
     distribution,
     supportType,
+    limitOverride: options.limitOverride || null,
+    safetyFactor: options.safetyFactor || 1.0,
     status: safe ? "pass" : "fail",
   };
 

@@ -241,11 +241,22 @@ export const DISTRIBUTION_FACTORS = {
  * @param {object} material - Material object from BASE_MATERIALS
  * @param {number} quantity - Quantity (must be > 0)
  * @param {string} distribution - One of: "even", "off-center", "top-heavy"
- * @param {string} supportType - One of: "scaffold", "hoist", "truck"
+ * @param {string} supportType - One of: "scaffold", "hoist", "truck", "custom"
+ * @param {object} [options]
+ * @param {number|null} [options.limitOverride] - Custom limit in lbs (required if supportType is "custom")
+ * @param {number} [options.safetyFactor=1.0] - Divides the effective limit (must be >= 1.0)
  * @returns {{ baseWeight: number, limit: number, ratio: number, safe: boolean }}
  * @throws {Error} If any argument is invalid
  */
-export function calculateLoad(material, quantity, distribution, supportType) {
+export function calculateLoad(
+  material,
+  quantity,
+  distribution,
+  supportType,
+  options = {},
+) {
+  const { limitOverride = null, safetyFactor = 1.0 } = options;
+
   if (!material || typeof material.weightPerUnit !== "number") {
     throw new Error("Invalid material.");
   }
@@ -255,13 +266,26 @@ export function calculateLoad(material, quantity, distribution, supportType) {
   if (!(distribution in DISTRIBUTION_FACTORS)) {
     throw new Error(`Unknown distribution type: "${distribution}".`);
   }
-  if (!(supportType in supportLimits)) {
+  if (supportType !== "custom" && !(supportType in supportLimits)) {
     throw new Error(`Unknown support type: "${supportType}".`);
+  }
+  if (
+    supportType === "custom" &&
+    (!Number.isFinite(limitOverride) || limitOverride <= 0)
+  ) {
+    throw new Error(
+      'A positive custom limit is required when support type is "custom".',
+    );
+  }
+  if (!Number.isFinite(safetyFactor) || safetyFactor < 1.0) {
+    throw new Error("Safety factor must be >= 1.0.");
   }
 
   const baseWeight = material.weightPerUnit * quantity;
   const factor = DISTRIBUTION_FACTORS[distribution];
-  const limit = supportLimits[supportType] * factor;
+  const baseLimit =
+    limitOverride !== null ? limitOverride : supportLimits[supportType];
+  const limit = (baseLimit * factor) / safetyFactor;
   const ratio = baseWeight / limit;
   const safe = ratio <= 1;
 
@@ -273,19 +297,40 @@ export function calculateLoad(material, quantity, distribution, supportType) {
  *
  * @param {Array<{material: object, quantity: number}>} items
  * @param {string} distribution - One of: "even", "off-center", "top-heavy"
- * @param {string} supportType - One of: "scaffold", "hoist", "truck"
+ * @param {string} supportType - One of: "scaffold", "hoist", "truck", "custom"
+ * @param {object} [options]
+ * @param {number|null} [options.limitOverride] - Custom limit in lbs (required if supportType is "custom")
+ * @param {number} [options.safetyFactor=1.0] - Divides the effective limit (must be >= 1.0)
  * @returns {{ itemResults: Array, totalWeight: number, limit: number, ratio: number, safe: boolean }}
  * @throws {Error} If any argument is invalid
  */
-export function calculateMixedLoad(items, distribution, supportType) {
+export function calculateMixedLoad(
+  items,
+  distribution,
+  supportType,
+  options = {},
+) {
+  const { limitOverride = null, safetyFactor = 1.0 } = options;
+
   if (!Array.isArray(items) || items.length === 0) {
     throw new Error("At least one item is required.");
   }
   if (!(distribution in DISTRIBUTION_FACTORS)) {
     throw new Error(`Unknown distribution type: "${distribution}".`);
   }
-  if (!(supportType in supportLimits)) {
+  if (supportType !== "custom" && !(supportType in supportLimits)) {
     throw new Error(`Unknown support type: "${supportType}".`);
+  }
+  if (
+    supportType === "custom" &&
+    (!Number.isFinite(limitOverride) || limitOverride <= 0)
+  ) {
+    throw new Error(
+      'A positive custom limit is required when support type is "custom".',
+    );
+  }
+  if (!Number.isFinite(safetyFactor) || safetyFactor < 1.0) {
+    throw new Error("Safety factor must be >= 1.0.");
   }
 
   const itemResults = items.map(({ material, quantity }) => {
@@ -300,7 +345,9 @@ export function calculateMixedLoad(items, distribution, supportType) {
 
   const totalWeight = itemResults.reduce((sum, r) => sum + r.weight, 0);
   const factor = DISTRIBUTION_FACTORS[distribution];
-  const limit = supportLimits[supportType] * factor;
+  const baseLimit =
+    limitOverride !== null ? limitOverride : supportLimits[supportType];
+  const limit = (baseLimit * factor) / safetyFactor;
   const ratio = totalWeight / limit;
   const safe = ratio <= 1;
 
