@@ -543,6 +543,12 @@ select:focus {
   padding: 10px 12px;
   background: #0b1020;
 }
+#loadItems {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #23272f;
+}
+
 .load-items-header {
   display: flex;
   justify-content: space-between;
