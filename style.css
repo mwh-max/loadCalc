@@ -732,7 +732,9 @@ textarea:focus {
   height: 100%;
   width: 0%;
   border-radius: 99px;
-  transition: width 0.3s ease, background 0.3s ease;
+  transition:
+    width 0.3s ease,
+    background 0.3s ease;
 }
 .gauge-bar.gauge-ok {
   background: var(--ok);
@@ -996,19 +998,19 @@ textarea:focus {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
   z-index: 100;
-  padding: 16px;
 }
 .modal-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: var(--panel);
   border: 1px solid #23272f;
   border-radius: 14px;
   box-shadow: var(--shadow);
-  width: 100%;
+  width: calc(100% - 32px);
   max-width: 420px;
   max-height: 90vh;
   overflow-y: auto;
