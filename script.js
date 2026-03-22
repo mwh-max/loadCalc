@@ -229,6 +229,7 @@ function loadPreset(index) {
     clearInlineError("presetError");
   }
 
+  lastResultData = null;
   loadItems = resolved;
   editingIndex = null;
   if (preset.distribution)
@@ -342,6 +343,12 @@ function updateGauge() {
 
   const ratio = totalWeight / limit;
   const pct = Math.min(ratio * 100, 100);
+
+  // Only fill the bar and label once a calculation has been run.
+  if (!lastResultData) {
+    resetGauge();
+    return;
+  }
 
   gaugeBar.style.width = `${pct}%`;
   gaugeBar.className =
@@ -1305,6 +1312,7 @@ document.getElementById("addToLoadBtn").addEventListener("click", addToLoad);
 document.getElementById("clearLoadBtn").addEventListener("click", () => {
   if (loadItems.length === 0) return;
   if (!confirm("Clear all items from the load?")) return;
+  lastResultData = null;
   loadItems = [];
   editingIndex = null;
   renderLoadItems();
