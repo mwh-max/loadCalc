@@ -25,10 +25,6 @@
           </div>
           <div class="header-right">
             <span id="offlineBadge" class="offline-badge" hidden>● Offline</span>
-            <div class="unit-toggle" role="group" aria-label="Weight unit">
-              <button type="button" id="unitLbs" class="unit-btn">lbs</button>
-              <button type="button" id="unitKg" class="unit-btn">kg</button>
-            </div>
           </div>
         </div>
       </header>
@@ -109,6 +105,12 @@
                   inputmode="decimal"
                 />
               </div>
+              <div class="unit-toggle-col">
+                <div class="unit-toggle" role="group" aria-label="Weight unit">
+                  <button type="button" id="unitLbs" class="unit-btn">lbs</button>
+                  <button type="button" id="unitKg" class="unit-btn">kg</button>
+                </div>
+              </div>
               <div class="add-btn-col">
                 <button type="button" id="addToLoadBtn" class="btn btn-secondary">
                   + Add to Load
@@ -118,13 +120,14 @@
 
             <div id="addError" class="inline-error" hidden></div>
 
-            <div id="loadItems" hidden>
+            <div id="loadItems">
               <div class="load-items-header">
                 <span>Load Items</span>
-                <button type="button" id="clearLoadBtn" class="btn-ghost">
+                <button type="button" id="clearLoadBtn" class="btn-ghost" hidden>
                   Clear all
                 </button>
               </div>
+              <p id="loadEmptyState" class="load-empty">No items added yet. Select a material and tap + Add to Load.</p>
               <ul id="loadItemsList" class="load-list"></ul>
             </div>
 

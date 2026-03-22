@@ -665,7 +665,9 @@ function renderLoadItems() {
   });
 
   loadTotalWeightEl.textContent = toDisplay(total);
-  loadItemsEl.hidden = loadItems.length === 0;
+  const isEmpty = loadItems.length === 0;
+  document.getElementById("loadEmptyState").hidden = !isEmpty;
+  document.getElementById("clearLoadBtn").hidden = isEmpty;
   updateCalculateBtn();
   updateGauge();
   updateStepLocks();
