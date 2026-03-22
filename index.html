@@ -126,18 +126,22 @@
                 </button>
               </div>
               <ul id="loadItemsList" class="load-list"></ul>
-              <div class="load-total">
-                Running total: <strong id="loadTotalWeight">0</strong>
-              </div>
             </div>
 
-            <div id="gauge" class="gauge" hidden>
-              <div class="gauge-header">
-                <span>Load vs. Limit</span>
-                <span id="gaugeLabel"></span>
+            <div id="loadSummary" class="load-summary">
+              <div class="load-summary-title">Load Summary</div>
+              <div class="load-summary-row">
+                <span class="load-summary-label">Running total</span>
+                <strong id="loadTotalWeight">0 lbs</strong>
               </div>
-              <div class="gauge-track">
-                <div id="gaugeBar" class="gauge-bar"></div>
+              <div class="load-summary-row">
+                <span class="load-summary-label">Load vs. Limit</span>
+                <span id="gaugeLabel">—</span>
+              </div>
+              <div id="gauge" class="gauge-track-wrap">
+                <div class="gauge-track">
+                  <div id="gaugeBar" class="gauge-bar gauge-idle"></div>
+                </div>
               </div>
             </div>
 

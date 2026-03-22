@@ -301,22 +301,29 @@ function getEffectiveLimit(supportType, factor) {
   return (baseLimit * factor) / sf;
 }
 
+function resetGauge() {
+  const gaugeBar = document.getElementById("gaugeBar");
+  const gaugeLabel = document.getElementById("gaugeLabel");
+  gaugeBar.style.width = "0%";
+  gaugeBar.className = "gauge-bar gauge-idle";
+  gaugeLabel.textContent = "—";
+}
+
 function updateGauge() {
-  const gaugeEl = document.getElementById("gauge");
   const gaugeBar = document.getElementById("gaugeBar");
   const gaugeLabel = document.getElementById("gaugeLabel");
   const distribution = document.getElementById("distribution").value;
   const supportType = document.getElementById("support").value;
 
   if (loadItems.length === 0 || !distribution || !supportType) {
-    gaugeEl.hidden = true;
+    resetGauge();
     return;
   }
 
   if (supportType === "custom") {
     const cl = parseFloat(document.getElementById("customLimit").value);
     if (!Number.isFinite(cl) || cl <= 0) {
-      gaugeEl.hidden = true;
+      resetGauge();
       return;
     }
   }
@@ -329,7 +336,7 @@ function updateGauge() {
   const limit = getEffectiveLimit(supportType, factor);
 
   if (!Number.isFinite(limit) || limit <= 0) {
-    gaugeEl.hidden = true;
+    resetGauge();
     return;
   }
 
@@ -341,7 +348,6 @@ function updateGauge() {
     "gauge-bar " +
     (ratio >= 1 ? "gauge-fail" : ratio >= 0.9 ? "gauge-warn" : "gauge-ok");
   gaugeLabel.textContent = `${toDisplay(totalWeight)} / ${toDisplay(limit)}`;
-  gaugeEl.hidden = false;
 }
 
 // ---- Material notes ----
@@ -1269,6 +1275,7 @@ updateCalculateBtn();
 updateCmWeightLabel();
 renderCustomMaterials();
 renderPresets();
+document.getElementById("loadTotalWeight").textContent = toDisplay(0);
 loadFromUrl();
 
 // ---- Listeners ----
