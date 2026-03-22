@@ -356,10 +356,27 @@ select:focus {
 .row {
   display: flex;
   gap: 12px;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 .row > * {
   flex: 1;
+}
+
+/* --- Distribution / Support two-column grid --- */
+.conditions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.conditions-grid select {
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .conditions-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .hr {
   height: 1px;
@@ -888,7 +905,7 @@ textarea:focus {
     padding: 14px 14px 10px;
   }
 
-  /* Stack distribution/support row; keep quantity+add-button row horizontal */
+  /* Stack other flex rows vertically; keep quantity+add-button row horizontal */
   .row:not(.row-add) {
     flex-direction: column;
     gap: 10px;
