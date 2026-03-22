@@ -968,13 +968,13 @@ function renderSupportComparison(data) {
 
     let badge, badgeClass;
     if (ratio > 1.0) {
-      badge = "FAIL";
+      badge = "⚠ FAIL";
       badgeClass = "sc-fail";
     } else if (ratio > 0.9) {
       badge = "WARN";
       badgeClass = "sc-warn";
     } else {
-      badge = "PASS";
+      badge = "✓ PASS";
       badgeClass = "sc-pass";
     }
 
@@ -1071,7 +1071,22 @@ function renderResults(data) {
       ? `Custom (${toDisplay(limitOverride, 0)} base)`
       : supportType,
   );
-  if (sf && sf > 1.0) appendResultRow("Safety Factor", `${sf}×`);
+  {
+    const sfVal = sf && sf > 1.0 ? sf : 1.0;
+    const sfDiv = document.createElement("div");
+    const sfLabel = document.createElement("strong");
+    sfLabel.textContent = "Safety Factor: ";
+    sfDiv.appendChild(sfLabel);
+    sfDiv.appendChild(document.createTextNode(`${sfVal}× `));
+    const sfHint = document.createElement("small");
+    sfHint.className = "sf-hint";
+    sfHint.textContent =
+      sfVal > 1.0
+        ? `(${((sfVal - 1) * 100).toFixed(0)}% safety buffer applied)`
+        : "(no buffer applied)";
+    sfDiv.appendChild(sfHint);
+    resultsEl.appendChild(sfDiv);
+  }
   appendResultRow("Adjusted Limit", toDisplay(limit, 2));
   appendResultRow(
     "Status",

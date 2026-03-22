@@ -299,7 +299,9 @@ select:focus {
   color: var(--accent);
 }
 .sc-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   padding: 2px 7px;
   border-radius: 99px;
   font-size: 11px;
@@ -316,6 +318,20 @@ select:focus {
 .sc-fail {
   background: rgba(220, 53, 69, 0.15);
   color: #f87171;
+}
+.sc-table tbody tr {
+  transition: background 0.15s ease;
+}
+.sc-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.05);
+}
+.sc-table tbody tr.sc-current td,
+.sc-table tbody tr.sc-current:hover td {
+  background: rgba(249, 115, 22, 0.07);
+}
+.sf-hint {
+  font-size: 11px;
+  color: var(--muted);
 }
 
 /* --- Result explanation block --- */
