@@ -544,6 +544,24 @@ function updateCalculateBtn() {
   calculateBtn.disabled = loadItems.length === 0;
 }
 
+function updateStepLocks() {
+  const step2 = document.getElementById("step2Section");
+  const step3 = document.getElementById("step3Section");
+  const num2 = document.getElementById("stepNum2");
+  const num3 = document.getElementById("stepNum3");
+
+  const hasItems = loadItems.length > 0;
+  const dist = document.getElementById("distribution").value;
+  const sup = document.getElementById("support").value;
+  const step2Complete = hasItems && dist && sup;
+
+  step2.classList.toggle("locked", !hasItems);
+  num2.classList.toggle("inactive", !hasItems);
+
+  step3.classList.toggle("locked", !step2Complete);
+  num3.classList.toggle("inactive", !step2Complete);
+}
+
 function confirmEdit(index, newQty) {
   if (!Number.isFinite(newQty) || newQty <= 0) {
     showInlineError("addError", "Quantity must be greater than zero.");
@@ -650,6 +668,7 @@ function renderLoadItems() {
   loadItemsEl.hidden = loadItems.length === 0;
   updateCalculateBtn();
   updateGauge();
+  updateStepLocks();
 }
 
 function addToLoad() {
@@ -1284,6 +1303,7 @@ renderCustomMaterials();
 renderPresets();
 document.getElementById("loadTotalWeight").textContent = toDisplay(0);
 loadFromUrl();
+updateStepLocks();
 
 // ---- Listeners ----
 
@@ -1322,6 +1342,7 @@ document.getElementById("distribution").addEventListener("change", () => {
   clearInlineError("calcError");
   updateDistributionHint();
   updateGauge();
+  updateStepLocks();
 });
 
 document.getElementById("support").addEventListener("change", () => {
@@ -1329,6 +1350,7 @@ document.getElementById("support").addEventListener("change", () => {
   const isCustom = document.getElementById("support").value === "custom";
   document.getElementById("customLimitRow").hidden = !isCustom;
   updateGauge();
+  updateStepLocks();
 });
 
 document.getElementById("customLimit").addEventListener("input", updateGauge);

@@ -449,6 +449,20 @@ select:focus {
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.step-num.inactive {
+  background: var(--muted);
+  color: #1f2937;
+}
+
+/* --- Step section locking --- */
+.step-section {
+  transition: opacity 0.3s ease;
+}
+.step-section.locked {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 /* --- Inline field errors --- */
@@ -618,6 +632,10 @@ select:focus {
 /* --- Custom materials section --- */
 .custom-materials {
   margin-top: 4px;
+  background: rgba(249, 115, 22, 0.04);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 0 10px;
 }
 .custom-materials summary {
   cursor: pointer;
@@ -790,6 +808,10 @@ textarea:focus {
 /* --- Presets section --- */
 .presets {
   margin-top: 4px;
+  background: rgba(249, 115, 22, 0.04);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 0 10px;
 }
 .presets summary {
   cursor: pointer;
@@ -808,14 +830,14 @@ textarea:focus {
   color: var(--text);
 }
 .presets summary::before {
-  content: "+";
+  content: "◈";
   font-weight: 700;
-  font-size: 14px;
-  transition: transform 0.2s ease;
+  font-size: 13px;
+  transition: opacity 0.2s ease;
   display: inline-block;
 }
 .presets[open] summary::before {
-  transform: rotate(45deg);
+  opacity: 0.6;
 }
 .preset-save {
   display: flex;
@@ -1391,4 +1413,20 @@ textarea:focus {
   .unit-toggle {
     display: none;
   }
+}
+
+/* --- Details expand/collapse animation --- */
+.details-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease, opacity 0.25s ease;
+  opacity: 0;
+}
+details[open] .details-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.details-inner {
+  overflow: hidden;
+  min-height: 0;
 }

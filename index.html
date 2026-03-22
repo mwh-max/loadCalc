@@ -145,8 +145,9 @@
               </div>
             </div>
 
+            <div id="step2Section" class="step-section">
             <div class="step-header">
-              <span class="step-num">2</span>
+              <span class="step-num" id="stepNum2">2</span>
               <span>Set Load Conditions</span>
             </div>
 
@@ -445,8 +446,11 @@
 
             <div id="calcError" class="inline-error" hidden></div>
 
+            </div><!-- /#step2Section -->
+
+            <div id="step3Section" class="step-section">
             <div class="step-header">
-              <span class="step-num">3</span>
+              <span class="step-num" id="stepNum3">3</span>
               <span>Review &amp; Calculate</span>
             </div>
 
@@ -473,12 +477,15 @@
                 alt="QR code for shared load"
               />
             </div>
+
+            </div><!-- /#step3Section -->
           </form>
 
           <hr class="hr" />
 
           <details class="presets">
             <summary>Presets</summary>
+            <div class="details-body"><div class="details-inner">
             <div class="preset-save">
               <input
                 type="text"
@@ -491,12 +498,14 @@
             </div>
             <div id="presetError" class="inline-error" hidden></div>
             <ul id="presetsList" class="preset-list"></ul>
+            </div></div><!-- /.details-inner/.details-body -->
           </details>
 
           <hr class="hr" />
 
           <details class="custom-materials">
             <summary>Custom Materials</summary>
+            <div class="details-body"><div class="details-inner">
             <form id="customMaterialForm" novalidate>
               <div class="row">
                 <div>
@@ -541,6 +550,7 @@
               <button type="submit" class="btn btn-secondary">Add Material</button>
             </form>
             <ul id="customMaterialsList" class="custom-list"></ul>
+            </div></div><!-- /.details-inner/.details-body -->
           </details>
         </section>
       </main>
