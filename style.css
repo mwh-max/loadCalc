@@ -180,16 +180,6 @@ select:focus {
 }
 
 /* --- Section layout --- */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-@media (min-width: 820px) {
-  .grid {
-    grid-template-columns: 1.1fr 1fr;
-  }
-}
 
 /* --- Notes / results area --- */
 .note {
@@ -232,9 +222,17 @@ select:focus {
   border-left: 4px solid #dc3545;
 }
 
+.site-footer {
+  margin-top: 24px;
+  padding: 16px 0 8px;
+  border-top: 1px solid #1f2937;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
 .disclaimer {
-  margin-top: 8px;
   font-style: italic;
+  margin: 0 0 4px;
 }
 
 /* --- Overload Advisor --- */
@@ -443,13 +441,6 @@ select:focus {
   margin-top: 6px;
 }
 
-/* --- Results empty state --- */
-.results-empty {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 12px;
-  font-style: italic;
-}
 
 /* --- Load item edit mode --- */
 .load-item-edit {
@@ -1337,12 +1328,12 @@ textarea:focus {
     box-shadow: none;
     border: 1px solid #ccc;
   }
-  .grid {
-    display: block;
-  }
-  /* Hide the form card entirely, show only results */
-  .grid > section:first-child {
+  /* Hide the form card, show only results panel */
+  main {
     display: none;
+  }
+  #resultsPanel {
+    display: block !important;
   }
   .results {
     display: block !important;

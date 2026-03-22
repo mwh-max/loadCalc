@@ -33,7 +33,7 @@
         </div>
       </header>
 
-      <main class="grid">
+      <main>
         <section class="card">
           <form id="loadForm" novalidate>
 
@@ -539,52 +539,51 @@
             <ul id="customMaterialsList" class="custom-list"></ul>
           </details>
         </section>
-
-        <section class="card">
-          <h2 class="small">Results</h2>
-          <p id="resultsEmpty" class="results-empty">
-            Complete steps 1–3 on the left to check your load.
-          </p>
-          <section id="results" class="results" hidden></section>
-          <div id="supportComparison" hidden></div>
-          <div id="loadFingerprint" hidden></div>
-          <button
-            type="button"
-            id="saveImageBtn"
-            class="btn btn-secondary btn-copy"
-            hidden
-          >
-            Save as Image
-          </button>
-          <button
-            type="button"
-            id="copyResultBtn"
-            class="btn btn-secondary btn-copy"
-            hidden
-          >
-            Copy Result
-          </button>
-          <button
-            type="button"
-            id="exportCsvBtn"
-            class="btn btn-secondary btn-copy"
-            hidden
-          >
-            Export CSV
-          </button>
-
-          <div id="historySection" hidden>
-            <h3 class="history-heading">Recent</h3>
-            <ul id="historyList" class="history-list"></ul>
-          </div>
-
-          <p class="disclaimer small">
-            Disclaimer: This tool provides general guidance only. Always confirm
-            load handling with a qualified supervisor or engineer.
-          </p>
-          <p class="small">LoadCalc v1.0.0</p>
-        </section>
       </main>
+
+      <section id="resultsPanel" class="card" hidden>
+        <h2 class="small">Results</h2>
+        <section id="results" class="results" hidden></section>
+        <div id="supportComparison" hidden></div>
+        <div id="loadFingerprint" hidden></div>
+        <button
+          type="button"
+          id="saveImageBtn"
+          class="btn btn-secondary btn-copy"
+          hidden
+        >
+          Save as Image
+        </button>
+        <button
+          type="button"
+          id="copyResultBtn"
+          class="btn btn-secondary btn-copy"
+          hidden
+        >
+          Copy Result
+        </button>
+        <button
+          type="button"
+          id="exportCsvBtn"
+          class="btn btn-secondary btn-copy"
+          hidden
+        >
+          Export CSV
+        </button>
+
+        <div id="historySection" hidden>
+          <h3 class="history-heading">Recent</h3>
+          <ul id="historyList" class="history-list"></ul>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <p class="disclaimer">
+          This tool provides general guidance only. Always confirm load handling
+          with a qualified supervisor or engineer.
+        </p>
+        <p>LoadCalc v1.0.0</p>
+      </footer>
     </div>
 
     <div

@@ -1013,10 +1013,10 @@ function renderResults(data) {
     limitOverride,
   } = data;
 
+  document.getElementById("resultsPanel").hidden = false;
   resultsEl.className = "results";
   resultsEl.innerHTML = "";
   resultsEl.hidden = false;
-  document.getElementById("resultsEmpty").hidden = true;
   document.getElementById("loadFingerprint").hidden = true;
   document.getElementById("saveImageBtn").hidden = true;
 
